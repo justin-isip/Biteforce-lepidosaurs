@@ -1,0 +1,173 @@
+---
+output: 
+  pdf_document:
+    latex_engine: pdflatex
+    template: svm-latex-ms.tex     
+title: " A comparative study of bite force across lepidosaurs "
+thanks: Thanks to Natalie Cooper for encouraging me to use Rmd to write up my thesis!
+author: 
+- name: Justin Ephraim Isip
+  affiliation: Imperial College London
+date: "25/06/2020"
+geometry: margin=1in
+spacing: double
+bibliography: trial.bib
+biblio-style: apalike
+link-citations: yes
+colorlinks: yes
+description: "My MSc Thesis"
+fontfamily: mathpazo
+fontsize: 11pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+
+## Background to BF studies 
+
+
+Bite-force is an important performance trait used to measure whole organism performance and fitness @herrel2001. The first studies of in vivo voluntary bite-force performance in non-human vertebrates appeared during the 1990s (ref). Over the past two decades research into bite-force performance in non-human vertebrates has increased significantly, with the second highest number of published studies on performance after locomotion (Lappin and Jones, 2014). In vivo bite force performance data are collected using a custom-built double-cantilever force transducer. The components include a piezoelectric isometric force transducer connected to a charge amplifier. The transducers themselves are custom fitted with two stainless steel bite plates that when compressed, produce tension on the transducer (see Herrel, et al., 1999). 
+\
+
+
+The bite plates are placed inside the mouth of the animal. Generally, between three to five defensive bites are recorded for each animal, with a rest period of a minute or more between each bite (e.g. Herrel, et al., 1999; Lappin, et al., 2006b). Defensive bites are much easier to elicit from an animal and so bite force data are almost always collected from defensive bites rather than feeding bites (Lappin and Jones, 2014). Importantly, defensive bites are more likely to represent maximum voluntary bite force, assuming that the threat of a predator will provoke the maximum voluntary bite force (Lappin and Jones, 2014).
+
+
+
+To date, most bite force studies have focused on lizards, but there are also studies on crocodylians, bats, rodents, sharks, hyenas and birds (Lappin and Jones, 2014). Most bite-force studies usually focus on a single species (ref), some studies have also compared multiple species that are closely related or belonging to the same genus, with some analyses including up to 27 species in species-rich groups such as anoles (Lopez-Darias, et al., 2015; Wittorski, et al., 2016; Dollion, et al., 2017; Meyer, et al., 2019).
+
+
+Link to next paragraph: The bite-force of an individual is directly linked to many aspects of its ecology and reveals the relationships between a species morphology and the ecological niches they occupy (Verwaijen, et al., 2002). 
+
+
+# 2nd paragraph: Morphology, diet, habitat, lifestyle and its relationship with performance (bite force)
+
+1st topic:  Background
+
+
+The relationship between an organism’s morphology, ecology and performance is important to our understanding of evolutionary and ecological processes that drive phenotypic variation (ref). Previous studies have shown that head morphology is strongly associated with bite force performance. In many lizard species, the head is important for ecological and social activities such as feeding, male aggression and habitat use (ref). There is a presumed straightforward relationship between bite force and the shape and size of the head; animals with larger or wider heads are able to accommodate more jaw musculature (ref) and this increase in jaw muscle mass results in a higher bite force (ref). As a result, head measurements such as width, height and length are assumed to be good predictors of bite-force (ref).  
+
+
+3rd topic: Bite force, sexual dimorphism and feeding?
+
+
+Bite force is also an important measure of sexual dimorphism (ref). In many species of lizards, males are larger in head and boy size than females (ref). Often, the dimorphism in head morphology is mirrored by a dimorphism in bite-force (Herrel, et al., 2007). This pattern may also allow for resource partitioning between sexes;  for example males that bite harder are able to consume larger and tougher prey items than their female conspecifics (gape and bite force performance are directly linked to maximum prey size; Verwaijen, et al., 2002). Bite-force and head morphology are therefore useful for understanding diet and feeding strategies, such as prey handling and consuming time (Herrel, et al., 1999; Verwaijen, et al., 2002). 
+
+
+Habitat use:
+
+Bite force and head morphology are also associated with habitat and refuge use. For example, in saxicolous lizards, head height is important as it determines the height of crevices used as refuges (Carretero, et al., 2006).
+
+4th topic: What else is bite force correlated/associated with?
+
+Dominance, territorial contests and reproductive success:
+
+Many studies have shown that bite force performance is correlated with success in dominance interactions or territory contests, with higher maximum bite forces being competitively advantageous (Husak, et al., 2008). Bite force may also predict the outcome of male-male combat (Lailavaux, et al. 2004; Huyghe et al. 2005; Husak et al. 2006)  and of reproductive success and fitness (Lappin and Husak, 2005; Husak, et al., 2006; Husak, et al., 2009). 
+
+Body size:
+
+Previous studies have shown that bite force tends to increase strongly with overall body size, but not predictably across species. In lizards, the evolution of a larger body size is thought to be associated with a herbivorous diet (ref). Furthermore, lizards that have a significant proportion of their diet as plant matter,  have a higher bite force and more strongly developed jaw adductor muscles than insectivores or carnivores (Herrel, et al., 1999a; Herrel, et al., 2004a; Herrel, et al., 2008)
+
+Link to next paragraph: The majority of research has focused on lepidosaurs (lizards, amphisbaenians and tuatara), due to their huge diversity of feeding strategies, as well as their experimental tractability...
+
+
+
+
+# 3rd paragraph: Why Lepidosaurs?
+
+Background sentence: What are Lepidosaurs?
+
+Lepidosauria is a superorder of ectothermic tetrapod vertebrates within Reptilia, comprising two distinct lineages: Squamata (snakes, lizards and amphisbaenians) and Rhynchocephalia (tuatara). 
+
+1st topic: Lizards are a model system
+
+With more than half of all reptiles being lizards, they comprise the vast majority of reptilian diversity (Reptile Database, 2020). Lizards are the largest, most ecologically and evolutionary diverse group and have radiated into a vast number of morphological, ecological, behavioural and life history strategies, making them a popular model system for bite force performance studies (ref). 
+
+2nd topic: Diversity of Lizards
+
+According to Reptile Database, an online catalogue of all living reptile species and their classification, lizards are the most species-rich group of lepidosaurs with ~ 6680 described species (Reptile Database, 2020). Some species-rich lizard groups such as the iguanian genera Anolis and Liolaemus, with > 400 and > 200 species respectively, are incredibly ecologically and morphologically diverse and occur across a huge range of climatic and ecological niches (ref). Making them a popular model system for understanding the relationships between head dimensions, ecology and performance.  
+
+In addition, the sexes of most Anolis and Liolaemus are dimorphic in head dimensions, resulting in interspecific and inter-sexual differences in diet and maximum bite force (Herrel, et al., 2004, 2006). Furthermore, the factors determining bite force performance may not be the same between sexes. For example, Vanhooydonck, et al., (2010) found that in male Liolaemus, variation in bite force was explained by the degree of sexual dimorphism in head width (e.g. an estimate of sexual selection). Whereas, in females, variation in bite force and head size can be explained to a certain extent, by diet (e.g. an estimate of natural selection). 
+
+
+
+
+
+
+Lizards are found all over the Earth, except in the Arctic and Antarctic (ref), and on some islands. Lizards occupy a diverse range of habitats and lifestyles, most primarily live on the ground, but others may live up in the trees, or in and around rocks or underground and even in the water, such as the marine iguana which is adapted to an aquatic lifestyle. 
+
+Lizards vary hugely in their overall body size, from the smallest chameleon (Brookesia micra) measuring at only 29mm to the Komodo dragon which can weigh as much as 70kg and reach 3m in length (ref). Lizards have a range of different diets, some groups are mostly herbivorous such as the iguanas (Iguanidae), carnivorous such as the monitor lizards (Varanidae), insectivorous such as the chameleons (Chameleonidae) or are omnivorous and eat both other animals and plants (ref). 
+
+
+Link to next paragraph: As previously mentioned, most bite force studies generally focus on a single species, or sometimes compare multiple species that are closely related or belonging to the same genus, however… 
+
+
+
+4th paragraph: What are the gaps in our knowledge
+
+Currently, no previous studies have examined the relationships between head morphology, bite force performance, diet, habitat and lifestyle strategies across the whole taxonomic breadth of lepidosaurs. Similarly, despite the  huge number of published bite force studies in lepidosaurs and vertebrates as a whole, there is no consistent method used to collect bite force data (Lappin and Jones, 2014).
+
+Link to next paragraph: Here, we aim to conduct a comparative analysis of bite force performance across all lepidosaurs (lizards, amphisbaenians and tuatara), and assess methods of data collection.. 
+
+## 5th paragraph: Aims of the study/how to fill the gaps:
+
+The primary aim of this study is to investigate the relationship between maximum bite force, morphology, diet, habitat and lifestyle strategies across all lepidosaurs (lizards, amphisbaenians and tuatara, excluding snakes, since these groups comprise the bulk of taxa used in bite force studies to date and represent both lineages of lepidosaurs). I will compare the most common morphological traits measured and maximum bite force capabilities of lepidosaurs used in bite-force studies to date. 
+
+I used Meiri’s (2018) Database on Lizard traits to infer the habitat (major biogeographic realm), diet (carnivorous, omnivorous and herbivorous) and lifestyle (arboreal, saxicolous, terrestrial, semi-aquatic, fossorial or cryptic) for each species in my dataset. 
+
+I intend to answer the following questions:
+
+Given that sexual dimorphism in head size and shape is prominent in many species of lizard, we expect males to have higher relative bite forces than females. 
+Are there intraspecific/intersexual differences in bite force and morphology between sexes? How does bite force performance vary between males and females of a similar SVL? 
+We expect head morphology and body size to be positively correlated with bite force performance. 
+Does head shape and size predict bite force in lepidosaurs?
+Which head dimensions are most highly associated with bite force performance?
+Are there interspecific differences in maximum bite force and morphology between different species? 
+Are relationships between head shape and size and bite force performance uniform across species and sexes?
+Another aim is to compare head dimensions and bite force performance of lepidosaurs in a phylogenetic context. 
+Given the importance of morphology and bite force performance for feeding, how does bite force vary depending on the diet of the species?
+The bite force of a lizard is strongly correlated to its dietary spectrum, because lizards can only ‘crush’ and process food items with a ‘hardness’ below its maximal bite force (ref). Do differences in bite force between species correlate with changes in head dimensions from different dietary groups?
+For example, we expect a higher maximum bite force on average for lizards that feed upon hard-shelled prey, such as molluscs. For example, Schaerlaeken, et al., (2012) found that Dracaena guianensis, a snail eating specialist, had a higher maximum bite force (383N) compared to a closely related omnivorous species Tupinambis merianae (334.8N). Similarly in amphisbaenians, the fossorial worm lizard Trogonophis wiegmanni, also a snail eating specialist, has a high maximum bite force (5.15N) relative to its small body and head. 
+Bite force performance is also associated with habitat, as different habitats may constrain or select for variation in head morphology. Are there differences in bite force depending on the habitat of the species?
+Are there differences in bite force depending on the lifestyle of the species?
+For example, do saxicolous species (those who inhabit rock crevices and thus have flatter heads) show decreased bite force performance compared to arboreal or terrestrial species?
+Similarly, for arboreal species, larger head dimensions may hinder climbing performance due to the shift in weight and centre of mass away from the substrate (Vanhooydonck & Van Damme, 1999; Vanhooydonck, et al., 2007).
+Vanhooydonck, et al., (2011) found trade-offs between burrowing and bite force performance in fossorial lizards such as skinks. In Acontias percivali, narrow-headed individuals were able to burrow much faster than broader-headed individuals. Whilst, both bite force and time needed to burrow into the substrate were largely determined by relative head width, suggesting a trade off between burrowing and bite force performance in this species, and this trade-off may prevent sexual dimorphism in head dimensions in fossorial lizards such as skinks. 
+Whereas, Guilloux, et al., (2020) found that there are no direct trade-offs between maximum burrowing and bite force performance when comparing 14 fossorial scincid lizards.
+
+Lappin and Jones (2014) have shown that methods of data collection vary considerably amongst bite force studies and that there is little consensus on the appropriate substrate to use on the biting surface of the force transducers.
+They also found that maximum bite force is significantly greater using leather as opposed to metal as the biting substrate. Therefore, how does the substrate cover affect bite force performance?
+
+
+
+Methods
+
+Data Collection:
+
+I surveyed all published studies reporting empirical data on in vivo bite-force performance in lepidosaurs (lizards, amphisbaenians and tuatara). Relevant published studies were identified using Google Scholar and search terms (e.g. bite, force, performance, transducer, Kistler)  and using the VivoBF database (Lappin and Jones, 2014), a database of published studies on bite force performance across a range of vertebrate taxa (not including humans).  I included chapters from books but not from unpublished work or theses. 
+
+In total I reviewed 111 published studies, of which 53 had empirical data available and 58 were data deficient, resulting in collected data on 180 different species. I compiled a dataset recording data on: (1) taxa involved, including (if available) sex, age, sample size for morphometrics and/or bite force (if different) (2) the most common morphological measurements related to overall size and head size, i.e. snout-vent length, body mass, head length, head height, head width, head height, lower-jaw length (3) 
+
+biting substrate (i.e. metal, leather, cloth, or tape used to cover the biting surface of the transducer). When biting substrate was not explicitly stated they were scored as ‘not listed’.
+
+I used Meiri’s (2018) data paper on ‘Traits of lizards of the world: Variation around a successful evolutionary design’ to collect trait and geographical data for each of the 180 species. More specifically, I collected data on: (1) the Major Biogeographic Realm that the species resides in, according to the WWF (2006), (2) Substrate, whether a species is arboreal, fossorial, terrestrial, cryptic, semi-aquatic, saxicolous or a combination of more than one of these, (3) Diet, whether a species is herbivorous (consumes mostly plants: > 50% if quantitative data are available, carnivorous (eats only, or nearly only, animal mater, > 90% if quantitative data are available), or omnivorous (eats mostly animal matter but with considerable percentage of plants: i.e. 10 - 50% plant matter, if quantitative data are available). 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
