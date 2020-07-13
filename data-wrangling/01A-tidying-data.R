@@ -9,7 +9,7 @@ library(tidyverse)
 # Read in my data
 #---------------------------------------------------------------
 
-d <- read.csv("original-data/11-07-2020-data.csv", na.strings=c("","NA", "N", "NA "), colClasses = c("Citation" = "factor", "Family" = "factor", "BinomialReptileDatabase" = "factor", "Sex" = "factor"))
+d <- read.csv("data/11-07-2020-data.csv", na.strings=c("","NA", "N", "NA "), colClasses = c("Citation" = "factor", "Family" = "factor", "BinomialReptileDatabase" = "factor", "Sex" = "factor"))
 
 
 #---------------------------------------------------------------

@@ -9,4 +9,105 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Load libraries
 
+library(tidyverse)
+
+# The 9 data arrangements are as follows:
+# 1. A1:  maximum bite force for each species (overall, males and females)
+# 2. A1M: maximum bite force for each species (males only)
+# 3. A1F: maximum bite force for each species (females only)
+# 4. A2:  average bite force + standard deviation for each species (overall, males and females)
+# 5. A2M: average bite force + standard deviation for each species (males only)
+# 6. A2F: average bite force + standard deviation for each species (females only)
+# 7. A3:  average bite force + standard error for each species (overall, males and females)
+# 8. A3M: average bite force + standard error for each species (males only)
+# 9. A3F: average bite force + standard error for each species (females only)
+
+```{r}
+# Read in the 9 datasets
+# Define Sex as a factor as otherwise treats F as false
+A1  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A1.csv", col_types = cols( Sex = col_factor())) 
+A1M  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A1M.csv", col_types = cols( Sex = col_factor())) 
+A1F  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A1F.csv", col_types = cols( Sex = col_factor())) 
+A2  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A2.csv", col_types = cols( Sex = col_factor())) 
+A2M  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A2M.csv", col_types = cols( Sex = col_factor())) 
+A2F  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A2F.csv", col_types = cols( Sex = col_factor())) 
+A3  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A3.csv", col_types = cols( Sex = col_factor())) 
+A3M  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A3M.csv", col_types = cols( Sex = col_factor())) 
+A3F  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A3F.csv", col_types = cols( Sex = col_factor())) 
+```
+
+## What’s the distribution of bite forces for each dataset?
+
+```{r}
+ggplot(A1, aes(x=log(MAX.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
+ggplot(A1M, aes(x=log(MAX.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
+ggplot(A1F, aes(x=log(MAX.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
+ggplot(A2, aes(x=log(SD.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
+ggplot(A2M, aes(x=log(SD.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
+ggplot(A2F, aes(x=log(SD.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
+ggplot(A3, aes(x=log(SE.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
+ggplot(A3M, aes(x=log(SE.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
+ggplot(A3F, aes(x=log(SE.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
+
+```
+
+
+## What's the distribution of bite forces across males and females for MAX.BF, SD.BF and SE.BF?
+
+```{r}
+# First bind the male df with female df
+A1MF<- bind_rows(A1F, A1M)
+A2MF<- bind_rows(A2F, A2M)
+A3MF<- bind_rows(A3F, A3M)
+
+ggplot(A1MF, aes(x = log(MAX.BF), fill = Sex)) +
+  geom_histogram(position = "identity", binwidth = 0.5, alpha = 0.6) 
+
+ggplot(A2MF, aes(x = log(SD.BF), fill = Sex)) +
+  geom_histogram(position = "identity", binwidth = 0.5, alpha = 0.6) 
+
+ggplot(A3MF, aes(x = log(SE.BF), fill = Sex)) +
+  geom_histogram(position = "identity", binwidth = 0.5, alpha = 0.6) 
+
+```
+
+## What's the distribution of SVL across males and females for the 3 data arrangements?
+
+```{r}
+ggplot(A1MF, aes(x = log(MAX.SVL), fill = Sex)) +
+  geom_histogram(position = "identity", binwidth = 0.1, alpha = 0.6) 
+
+ggplot(A2MF, aes(x = log(SD.SVL), fill = Sex)) +
+  geom_histogram(position = "identity", binwidth = 0.1, alpha = 0.6) 
+
+ggplot(A3MF, aes(x = log(SE.SVL), fill = Sex)) +
+  geom_histogram(position = "identity", binwidth = 0.1, alpha = 0.6) 
+
+```
+
+
+## What's the relationship between BF and all morphometric variables between males and females?
+
+```{r}
+ggplot(A1MF, aes(x=log(MAX.BF), y =log(MAX.SVL), shape = Sex, colour = Sex)) + 
+  geom_point() 
+  
+ggplot(A1MF, aes(x=log(MAX.BF), y =log(MAX.BM), shape = Sex, colour = Sex)) + 
+geom_point() 
+
+ggplot(A1MF, aes(x=log(MAX.BF), y =log(MAX.HL), shape = Sex, colour = Sex)) + 
+geom_point() 
+
+ggplot(A1MF, aes(x=log(MAX.BF), y =log(MAX.HW), shape = Sex, colour = Sex)) + 
+geom_point() 
+
+ggplot(A1MF, aes(x=log(MAX.BF), y =log(MAX.HH),shape = Sex, colour = Sex)) + 
+geom_point() 
+
+ggplot(A1MF, aes(x=log(MAX.BF), y =log(MAX.LJL),shape = Sex, colour = Sex)) + 
+geom_point() 
+```
+	
+	
