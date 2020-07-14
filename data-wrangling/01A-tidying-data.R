@@ -1,4 +1,4 @@
-# Tidying the data from my dataset
+# Tidying the data from my dataset and getting it ready for analysis
 # Justin Isip
 # July 2020
 #---------------------------------
@@ -36,34 +36,36 @@ d <- d %>%
   # Convert back to factor
   d$Sex <- as.factor(d$Sex) 
   
-  # How many NAs in each column 
+  # Function to count how many NAs are in each column
   na_count <-sapply(d, function(y) sum(length(which(is.na(y))))) 
   
   # Convert to DF
   na_count <- data.frame(na_count) 
   
-  # Total rows: 331 - NA's to tell me how many rows we have data for :)
+  # There are 331 rows in total (331 - NA), tells me how many rows have data
   na_count <- 331 - na_count 
   
+  
+  
 #---------------------------------------------------------------
-# Here, I am going to create 9 datasets for 9 different analyses
-# 1. A1:  maximum bite force for each species (overall, males and females)
+# Here, I am going to create 9 datasets for the different analyses:
+# 1. A1:  maximum bite force for each species (overall, males and females combined)
 # 2. A1M: maximum bite force for each species (males only)
 # 3. A1F: maximum bite force for each species (females only)
-# 4. A2:  average bite force + standard deviation for each species (overall, males and females)
+# 4. A2:  average bite force + standard deviation for each species (overall, males and females combined)
 # 5. A2M: average bite force + standard deviation for each species (males only)
 # 6. A2F: average bite force + standard deviation for each species (females only)
-# 7. A3:  average bite force + standard error for each species (overall, males and females)
+# 7. A3:  average bite force + standard error for each species (overall, males and females combined)
 # 8. A3M: average bite force + standard error for each species (males only)
 # 9. A3F: average bite force + standard error for each species (females only)
 #---------------------------------------------------------------  
-# A1  (MAXBF without SD or SE)
+# A1  (MAXBF without SD or SE, overall)
 # Here I've created new columns for BF and all the morph measurements (BM,SVL,HH,HW,HL LJL)
-# The new column is the max for each variable
+# The new column is the max for each variable for each species
 # The code is, If BF.MAX is an NA, print BF, else print BF.MAX
 # This gives me a column of either the BF.MAX or the BF value (average)
-# BF = average bite force for that sample
-# BF.MAX = maximum bite recorded for that sample
+# BF = average bite force recorded for that species
+# BF.MAX = maximum bite force recorded for that species
 # This chooses between BF and BF.MAX (BF.MAX will always be higher than the average)
 # Therefore, if BF.MAX is available input that into the column, else input the average
 #---------------------------------------------------------------
@@ -79,40 +81,44 @@ d <- d %>%
    mutate(MAX.HH=ifelse(is.na(HH.MAX),HH,HH.MAX))%>%
    mutate(MAX.LJL=ifelse(is.na(LJL.MAX),LJL,LJL.MAX)) %>%
    
-   # We have multiple rows for the same species
+   # We want one row for each species, but we have instances of multiple rows for the same species  
    # Filter the max bite force for each species!
    group_by(BinomialReptileDatabase) %>%
    filter(MAX.BF == max(MAX.BF)) 
   
-   # Check for duplicate rows in case two rows have the same max BF  
+   # Check for duplicate rows in case two species/two individuals of the same species have the same max BF  
    A1[duplicated(A1$BinomialReptileDatabase),]
   
-  # Whoops, for two species, two individuals have the same max BF
+  # Whoops, for two species, two individuals have the same max BF:
   # Bradypodion kentanicum - I've chosen to filter out the individual with the smaller SVL
   # Bradypodion melanocephalum - I've chosen to filter out the individual with less morph data available
   # Filter these two species out based on their SVL
   # I checked before to make sure they were the only species with this exact SVL
-  A1 <- filter(A1, MAX.SVL != 51.02,) %>%
+  # A1[A1$SVL == 51.02,] 
+  # A1[A1$SVL == 57.02,] 
+  
+   A1 <- filter(A1, MAX.SVL != 51.02,) %>%
         filter( MAX.SVL != 57.02,) 
   
   # Double check to make sure I haven't messed this up
   # There are 164 distinct species in my original dataset
   d %>% distinct(BinomialReptileDatabase)
   
-  # 164 distinct species in my filtered MAX.BF dataset (males + females)
+  # There are also 164 distinct species in my A1 dataset
   A1 %>% distinct(BinomialReptileDatabase)
 
-#---------------------------------------------------------------  
-# A1M  (MAXBF without SD or SE) - MALES
-# Exact same steps as A1, except filtering for males and removing
-# unknown sex species
-#---------------------------------------------------------------    
+  #---------------------------------------------------------------  
+  # A1M  (MAXBF without SD or SE) - MALES
+  # Exact same steps as A1, except filtering for males and removing
+  # species with unknown sex
+  #---------------------------------------------------------------    
   
   A1M <- d %>% 
+    
     # Filter only males and remove species with unknown sex
     filter(Sex == "M" & Sex != "Unknown") %>%
     
-    #As before create new MAX.BF column
+    #As before, create new columns
     mutate(MAX.BF=ifelse(is.na(BF.MAX),BF,BF.MAX))%>%
     mutate(MAX.BM=ifelse(is.na(BM.MAX),BM,BM.MAX))%>%
     mutate(MAX.SVL=ifelse(is.na(SVL.MAX),SVL,SVL.MAX))%>%
@@ -125,47 +131,47 @@ d <- d %>%
     group_by(BinomialReptileDatabase) %>%
     filter(MAX.BF == max(MAX.BF)) 
   
-    # Check for duplicate rows in case two individuals have the same BF values 
+    # Check for duplicate rows in case two species/two individuals of the same species have the same max BF  
     A1M[duplicated(A1M$BinomialReptileDatabase),]
     
-    # Duplicate rows:
-    # Anolis sheplani - kept the individual with a larger SVL
+    # Species/individuals with the same MAX.BF:
+    # Anolis sheplani - kept the individual with the larger SVL
     # Bradypodion melanocephalum - kept the individual with better quality data
-    # Filter these two individuals out based on their SVL
     # I checked before to make sure they were the only individuals with this exact SVL
-    #  A1M[A1M$SVL == 48.63,]
+    # A1M[A1M$SVL == 48.63,]
     # A1M[A1M$SVL == 38.61,]
     
     A1M <- filter(A1M, MAX.SVL != 48.63,) %>%
       filter( MAX.SVL != 38.61,) 
     
-    # 132 distinct species in my filtered MAX.BF dataset (MALES only)
+    # 132 distinct species in my A1M dataset 
     A1M %>% distinct(BinomialReptileDatabase)
 
     #---------------------------------------------------------------  
     # A1F (MAXBF without SD or SE) - FEMALES
-    # Exact same steps as A1 and A1M, except filtering for females and removing
+    # Exact same steps as A1 and A1M, except filtering for females only and removing
     # unknown sex species
     #---------------------------------------------------------------    
     
     A1F <- d %>% 
-      # Filter only males and remove species with unknown sex
-      filter(Sex == "F" & Sex != "Unknown") %>%
       
-      #As before create new MAX.BF column
-      mutate(MAX.BF=ifelse(is.na(BF.MAX),BF,BF.MAX))%>%
-      mutate(MAX.BM=ifelse(is.na(BM.MAX),BM,BM.MAX))%>%
-      mutate(MAX.SVL=ifelse(is.na(SVL.MAX),SVL,SVL.MAX))%>%
-      mutate(MAX.HL=ifelse(is.na(HL.MAX),HL,HL.MAX))%>%
-      mutate(MAX.HW=ifelse(is.na(HW.MAX),HW,HW.MAX))%>%
-      mutate(MAX.HH=ifelse(is.na(HH.MAX),HH,HH.MAX))%>%
-      mutate(MAX.LJL=ifelse(is.na(LJL.MAX),LJL,LJL.MAX)) %>%
+    # Filter only females and remove species with unknown sex:
+    filter(Sex == "F" & Sex != "Unknown") %>%
       
-      # Filter the max bite force for each species!
-      group_by(BinomialReptileDatabase) %>%
-      filter(MAX.BF == max(MAX.BF)) 
+    #As before, create new columns:
+    mutate(MAX.BF=ifelse(is.na(BF.MAX),BF,BF.MAX))%>%
+    mutate(MAX.BM=ifelse(is.na(BM.MAX),BM,BM.MAX))%>%
+    mutate(MAX.SVL=ifelse(is.na(SVL.MAX),SVL,SVL.MAX))%>%
+    mutate(MAX.HL=ifelse(is.na(HL.MAX),HL,HL.MAX))%>%
+    mutate(MAX.HW=ifelse(is.na(HW.MAX),HW,HW.MAX))%>%
+    mutate(MAX.HH=ifelse(is.na(HH.MAX),HH,HH.MAX))%>%
+    mutate(MAX.LJL=ifelse(is.na(LJL.MAX),LJL,LJL.MAX)) %>%
+      
+    # Filter the max bite force for each species!
+    group_by(BinomialReptileDatabase) %>%
+    filter(MAX.BF == max(MAX.BF)) 
     
-    # Check for duplicate rows in case two individuals have the same BF values 
+    # Check for duplicate rows in case two species/two individuals of the same species have the same max BF 
     A1F[duplicated(A1F$BinomialReptileDatabase),]
     
     # Duplicate rows:
@@ -176,23 +182,22 @@ d <- d %>%
     
     A1F <- filter(A1F, MAX.SVL != 57.02)
   
-    # 112 distinct species in my filtered MAX.BF dataset (females only)
+    # 112 distinct species in my filtered A1F dataset
     A1F %>% distinct(BinomialReptileDatabase)
 
-#---------------------------------------------------------------  
-# Analysis 2  (Average BF + SD)
-# Formula: SD <- SE * sqrt(n)  
-# Here I've created new columns for BF and all the morph measurements (BM,SVL,HH,HW,HL LJL)
-# The new column is the average + the SD for each variable (as a proxy for the maximum)
-# The code is if BF.SE is an NA then print BF + BF.SD, else print BF + (BF.SE * sqrt(SSM))
-# SSM = sample size morphometrics  
-# Gives me a column of bite force + the standard deviation
-#---------------------------------------------------------------
-# Create new columns: SD.BM, SD.SVL, SD.HH, SD.HW, SD.HL, SD.LJL
-# Note that for BF I used SSBF (sample size for bite force)
-#---------------------------------------------------------------  
+  #---------------------------------------------------------------  
+  # Analysis 2  (Average BF + SD)
+  # Formula: SD <- SE * sqrt(n)  
+  # Here I've created new columns for BF and all the morph measurements (BM,SVL,HH,HW,HL LJL)
+  # The new column is the average bite force + the SD for each variable, for each species (as a proxy for the maximum)
+  # The code is if BF.SE is an NA then print BF + BF.SD, else print BF + (BF.SE * sqrt(SSM))
+  # SSM = sample size morphometrics  
+  #---------------------------------------------------------------
+  # Create new columns: SD.BM, SD.SVL, SD.HH, SD.HW, SD.HL, SD.LJL
+  # Note that for BF I used SSBF (sample size for bite force)
+  #---------------------------------------------------------------  
 
-  A2 <- d %>% 
+    A2 <- d %>% 
   
     # First, remove species with "bad" data quality that can't be used for SD/SE analysis
     filter(DataQuality != "Bad") %>%
@@ -206,14 +211,14 @@ d <- d %>%
     mutate(SD.BF=ifelse(is.na(BF.SE),BF+BF.SD,BF+(BF.SE*sqrt(SSBF)))) %>% 
   
   # Filter the max bite force for each species!
-      group_by(BinomialReptileDatabase) %>%
-      filter(SD.BF == max(SD.BF)) 
+    group_by(BinomialReptileDatabase) %>%
+    filter(SD.BF == max(SD.BF)) 
   
   # Check for duplicate rows
-  A2[duplicated(A2$BinomialReptileDatabase),]
+    A2[duplicated(A2$BinomialReptileDatabase),]
 
-  # 128 distinct species in my filtered SD.BF dataset (males + females)
-  A2 %>% distinct(BinomialReptileDatabase)
+  # 128 distinct species in my A2 dataset
+    A2 %>% distinct(BinomialReptileDatabase)
   
   
   #---------------------------------------------------------------  
@@ -221,12 +226,13 @@ d <- d %>%
   # Exact same steps as A2, except filtering for males and removing
   # unknown sex species
   #---------------------------------------------------------------    
-  A2M <- d %>% 
+  
+    A2M <- d %>% 
     
     # First, remove species with "bad" data quality that can't be used for SD/SE analysis
     filter(DataQuality != "Bad") %>%
     
-    # Filter for only males and remove species with unknown sex 
+    # Filter for males only and remove species with unknown sex 
     filter(Sex == "M" & Sex != "Unknown") %>%
   
     mutate(SD.BM=ifelse(is.na(BM.SE),BM+BM.SD,BM+(BM.SE*sqrt(SSM))))%>%
@@ -241,11 +247,11 @@ d <- d %>%
     group_by(BinomialReptileDatabase) %>%
     filter(SD.BF == max(SD.BF)) 
   
-  # Check for duplicate rows
-  A2M[duplicated(A2M$BinomialReptileDatabase),]
+    # Check for duplicate rows (there are none)
+    A2M[duplicated(A2M$BinomialReptileDatabase),]
   
-  # 94 distinct species in my filtered SD.BF dataset (males only)
-  A2M %>% distinct(BinomialReptileDatabase)
+    # 94 distinct species in my filtered A2M dataset
+    A2M %>% distinct(BinomialReptileDatabase)
   
   
   #---------------------------------------------------------------  
@@ -253,12 +259,13 @@ d <- d %>%
   # Exact same steps as A2 and A2M, except filtering for females and removing
   # unknown sex species
   #---------------------------------------------------------------    
-  A2F <- d %>% 
+  
+    A2F <- d %>% 
     
     # First, remove species with "bad" data quality that can't be used for SD/SE analysis
     filter(DataQuality != "Bad") %>%
     
-    # Filter for only females and remove species with unknown sex 
+    # Filter for females only and remove species with unknown sex 
     filter(Sex == "F" & Sex != "Unknown") %>%
     
     mutate(SD.BM=ifelse(is.na(BM.SE),BM+BM.SD,BM+(BM.SE*sqrt(SSM))))%>%
@@ -273,28 +280,28 @@ d <- d %>%
     group_by(BinomialReptileDatabase) %>%
     filter(SD.BF == max(SD.BF)) 
   
-  # Check for duplicate rows
-  A2F[duplicated(A2F$BinomialReptileDatabase),]
+    # Check for duplicate rows (there are none)
+    A2F[duplicated(A2F$BinomialReptileDatabase),]
   
-  # 92 distinct species in my filtered SD.BF dataset (females only)
-  A2F %>% distinct(BinomialReptileDatabase)
+    # 92 distinct species in my filtered A2F
+    A2F %>% distinct(BinomialReptileDatabase)
   
   
 
-#---------------------------------------------------------------  
-# Analysis 3  (Average BF + SE) - (overall, males + females)
-# Formula: SE <- SD / sqrt(n) 
-# Here I've created new columns for BF and all the morph measurements (BM,SVL,HH,HW,HL LJL)
-# The new column is the average + the SE for each variable (as a proxy for the maximum)
-# The code is if BF.SD is an NA then print BF + BF.SE, else print BF + (BF.SD / sqrt(SSM))
-# SSM = sample size morphometrics
-# Gives me a column of bite force + the standard error
-#---------------------------------------------------------------
-# Create new columns: SD.BM, SD.SVL, SD.HH, SD.HW, SD.HL, SD.LJL
-# Note that for BF I used SSBF (sample size for bite force)
-#---------------------------------------------------------------  
+  #---------------------------------------------------------------  
+  # Analysis 3  (Average BF + SE) - (overall, males + females)
+  # Formula: SE <- SD / sqrt(n) 
+  # Here I've created new columns for BF and all the morph measurements (BM,SVL,HH,HW,HL LJL)
+  # The new column is the average + the SE for each variable (as a proxy for the maximum)
+  # The code is if BF.SD is an NA then print BF + BF.SE, else print BF + (BF.SD / sqrt(SSM))
+  # SSM = sample size morphometrics
+  # Gives me a column of bite force + the standard error
+  #---------------------------------------------------------------
+  # Create new columns: SD.BM, SD.SVL, SD.HH, SD.HW, SD.HL, SD.LJL
+  # Note that for BF I used SSBF (sample size for bite force)
+  #---------------------------------------------------------------  
   
-  A3 <- d %>% 
+    A3 <- d %>% 
     
     # First, remove species with "bad" data quality that can't be used for SD/SE analysis
     filter(DataQuality != "Bad") %>%
@@ -307,22 +314,21 @@ d <- d %>%
     mutate(SE.LJL=ifelse(is.na(LJL.SD),LJL+LJL.SE,LJL+(LJL.SD/sqrt(SSM))))%>%
     mutate(SE.BF=ifelse(is.na(BF.SD),BF+BF.SE,BF+(BF.SD/sqrt(SSBF))))
   
-  # We have multiple rows for the same species
-  # Filter the max bite force for each species!
-  A3 <- A3 %>% 
+    # Filter the max bite force for each species!
+    A3 <- A3 %>% 
     group_by(BinomialReptileDatabase) %>%
     filter(SE.BF == max(SE.BF)) 
   
-  # 128 distinct species in my filtered SD.BF dataset 
-  A3 %>% distinct(BinomialReptileDatabase)
+    # 128 distinct species in my filtered A3 dataset 
+    A3 %>% distinct(BinomialReptileDatabase)
 
-  #---------------------------------------------------------------  
-  # A3M (average BF + SE) - MALES
-  # Exact same steps as A3, except filtering for males and removing
-  # unknown sex species
-  #---------------------------------------------------------------    
+    #---------------------------------------------------------------  
+    # A3M (average BF + SE) - MALES
+    # Exact same steps as A3, except filtering for males and removing
+    # species of unknown sex
+    #---------------------------------------------------------------    
   
-  A3M <- d %>% 
+    A3M <- d %>% 
     
     # First, remove species with "bad" data quality that can't be used for SD/SE analysis
     filter(DataQuality != "Bad") %>%
@@ -339,21 +345,21 @@ d <- d %>%
     mutate(SE.LJL=ifelse(is.na(LJL.SD),LJL+LJL.SE,LJL+(LJL.SD/sqrt(SSM))))%>%
     mutate(SE.BF=ifelse(is.na(BF.SD),BF+BF.SE,BF+(BF.SD/sqrt(SSBF))))%>%
   
-  # Filter the max SE bite force for each species!
+    # Filter the max SE bite force for each species!
     group_by(BinomialReptileDatabase) %>%
     filter(SE.BF == max(SE.BF)) 
   
-  # 94 distinct species in my filtered SD.BF dataset (males only)
-  A3M %>% distinct(BinomialReptileDatabase)
+    # 94 distinct species in my filtered A3M dataset
+    A3M %>% distinct(BinomialReptileDatabase)
   
   
-  #---------------------------------------------------------------  
-  # A3F (average BF + SE) - FEMALES
-  # Exact same steps as A3, except filtering for females and removing
-  # unknown sex species
-  #---------------------------------------------------------------    
+    #---------------------------------------------------------------  
+    # A3F (average BF + SE) - FEMALES
+    # Exact same steps as A3, except filtering for females and removing
+    # species of unknown sex
+    #---------------------------------------------------------------    
   
-  A3F <- d %>% 
+       A3F <- d %>% 
     
     # First, remove species with "bad" data quality that can't be used for SD/SE analysis
     filter(DataQuality != "Bad") %>%
@@ -374,8 +380,8 @@ d <- d %>%
     group_by(BinomialReptileDatabase) %>%
     filter(SE.BF == max(SE.BF)) 
   
-  # 92 distinct species in my filtered SD.BF dataset (females only)
-  A3F %>% distinct(BinomialReptileDatabase)
+    # 92 distinct species in my filtered A3F dataset
+    A3F %>% distinct(BinomialReptileDatabase)
   
   
   
@@ -405,15 +411,15 @@ d <- d %>%
   
   
   # write each dataset to csv
-  write.csv(A1,"C:/Users/Justin Isip/Documents/MSc Thesis/A1.csv", row.names = FALSE)
-  write.csv(A1M,"C:/Users/Justin Isip/Documents/MSc Thesis/A1M.csv", row.names = FALSE)
-  write.csv(A1F,"C:/Users/Justin Isip/Documents/MSc Thesis/A1F.csv", row.names = FALSE)
-  write.csv(A2,"C:/Users/Justin Isip/Documents/MSc Thesis/A2.csv", row.names = FALSE)
-  write.csv(A2M,"C:/Users/Justin Isip/Documents/MSc Thesis/A2M.csv", row.names = FALSE)
-  write.csv(A2F,"C:/Users/Justin Isip/Documents/MSc Thesis/A2F.csv", row.names = FALSE)
-  write.csv(A3,"C:/Users/Justin Isip/Documents/MSc Thesis/A3.csv", row.names = FALSE)
-  write.csv(A3M,"C:/Users/Justin Isip/Documents/MSc Thesis/A3M.csv", row.names = FALSE)
-  write.csv(A3F,"C:/Users/Justin Isip/Documents/MSc Thesis/A3F.csv", row.names = FALSE)
+  write.csv(A1,"C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/A1.csv", row.names = FALSE)
+  write.csv(A1M,"C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/A1M.csv", row.names = FALSE)
+  write.csv(A1F,"C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/A1F.csv", row.names = FALSE)
+  write.csv(A2,"C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/A2.csv", row.names = FALSE)
+  write.csv(A2M,"C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/A2M.csv", row.names = FALSE)
+  write.csv(A2F,"C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/A2F.csv", row.names = FALSE)
+  write.csv(A3,"C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/A3.csv", row.names = FALSE)
+  write.csv(A3M,"C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/A3M.csv", row.names = FALSE)
+  write.csv(A3F,"C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/A3F.csv", row.names = FALSE)
 
   
   
