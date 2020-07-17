@@ -1,4 +1,35 @@
+# R #
+*.Rhistory
+*.Rapp.history
 .Rproj.user
-.Rhistory
 .RData
-.Ruserdata
+inst/doc
+
+# Raw data and idiocy prevention #
+*.xlsx
+*.xls
+*.doc
+*.docx
+*.pptx
+*.rds
+
+# LaTeX #
+*.aux
+*.bbl
+*.blg
+*.dvi
+*.fff
+*.lof
+*.lot
+*.out
+*.toc
+*.ttt
+*.fdb_latexmk
+*.pdf
+*.bib
+*.tex
+
+ignore/
+manuscript/
+data/
+supp-info/
