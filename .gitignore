@@ -4,6 +4,6 @@
 .Rproj.user
 .RData
 inst/doc
-
 ignore/
 supp-info/
+01A-tidying-data.R
