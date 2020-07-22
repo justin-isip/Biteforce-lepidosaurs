@@ -151,9 +151,9 @@ rawdata <- rawdata %>%
 # 1. max_bf_overall:  maximum bite force for each species (overall = males and females combined)
 # 2. max_bf_males: maximum bite force for each species (males only)
 # 3. max_bf_females: maximum bite force for each species (females only)
-# 4. avg_bf_withsd_overall:  average bite force + standard deviation for each species (overall = males and females combined)
-# 5. avg_bf_withsd_males: average bite force + standard deviation for each species (males only)
-# 6. avg_bf_withsd_females: average bite force + standard deviation for each species (females only)
+# 4. avg_bf_plus_sd_overall:  average bite force + standard deviation for each species (overall = males and females combined)
+# 5. avg_bf_plus_sd_males: average bite force + standard deviation for each species (males only)
+# 6. avg_bf_plus_sd_females: average bite force + standard deviation for each species (females only)
 # 7. avg_bf_withse_overall:  average bite force + standard error for each species (overall = males and females combined)
 # 8. avg_bf_withse_males: average bite force + standard error for each species (males only)
 # 9. Avg_bf_withse_females: average bite force + standard error for each species (females only)
@@ -176,18 +176,18 @@ rawdata <- rawdata %>%
 #--------------------------------------------------------------------------------------------------------------------------
   
    max_bf_overall <- rawdata %>% 
-   mutate(max_bf_overall = get_max(BF.MAX, BF))  %>%
-   mutate(max_bm_overall = get_max(BM.MAX, BM))  %>%
-   mutate(max_svl_overall = get_max(SVL.MAX, SVL))  %>%  
-   mutate(max_hl_overall = get_max(HL.MAX, HL))  %>%
-   mutate(max_hw_overall = get_max(HW.MAX, HW))  %>%
-   mutate(max_hh_overall = get_max(HH.MAX, HH))  %>%
-   mutate(max_ljl_overall = get_max(LJL.MAX, LJL))  %>%
+   mutate(max_bf = get_max(BF.MAX, BF))  %>%
+   mutate(max_bm = get_max(BM.MAX, BM))  %>%
+   mutate(max_svl = get_max(SVL.MAX, SVL))  %>%  
+   mutate(max_hl = get_max(HL.MAX, HL))  %>%
+   mutate(max_hw = get_max(HW.MAX, HW))  %>%
+   mutate(max_hh = get_max(HH.MAX, HH))  %>%
+   mutate(max_ljl = get_max(LJL.MAX, LJL))  %>%
    
    # We want one row for each species, but we have instances of multiple rows for the same species  
    # Filter the max bite force for each species!
    group_by(BinomialReptileDatabase) %>%
-   filter(max_bf_overall == max(max_bf_overall)) %>%
+   filter(max_bf == max(max_bf)) %>%
    
    # For instances where two individuals of the same species have the same max BF (duplicates)
    # I have chosen to keep the individual with the fewest NAs (i.e. the better quality data)
@@ -200,7 +200,7 @@ rawdata <- rawdata %>%
    distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
   
    # Select columns we want
-   select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, max_bf_overall, max_bm_overall, max_svl_overall, max_hl_overall, max_hw_overall, max_hh_overall, max_ljl_overall)
+   select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, max_bf, max_bm, max_svl, max_hl, max_hw, max_hh, max_ljl)
   
 
     #---------------------------------------------------------------------------------    
@@ -215,22 +215,22 @@ rawdata <- rawdata %>%
     filter(Sex == "M" & Sex != "Unknown") %>%
     
     #As before, create new columns
-    mutate(max_bf_males = get_max(BF.MAX, BF))  %>%
-    mutate(max_bm_males = get_max(BM.MAX, BM))  %>%
-    mutate(max_svl_males = get_max(SVL.MAX, SVL))  %>%  
-    mutate(max_hl_males = get_max(HL.MAX, HL))  %>%
-    mutate(max_hw_males = get_max(HW.MAX, HW))  %>%
-    mutate(max_hh_males = get_max(HH.MAX, HH))  %>%
-    mutate(max_ljl_males = get_max(LJL.MAX, LJL))  %>%
+    mutate(max_bf = get_max(BF.MAX, BF))  %>%
+    mutate(max_bm = get_max(BM.MAX, BM))  %>%
+    mutate(max_svl = get_max(SVL.MAX, SVL))  %>%  
+    mutate(max_hl = get_max(HL.MAX, HL))  %>%
+    mutate(max_hw = get_max(HW.MAX, HW))  %>%
+    mutate(max_hh = get_max(HH.MAX, HH))  %>%
+    mutate(max_ljl = get_max(LJL.MAX, LJL))  %>%
     
     # Filter the max bite force for each species!
     group_by(BinomialReptileDatabase) %>%
-    filter(max_bf_males == max(max_bf_males)) %>%
+    filter(max_bf == max(max_bf)) %>%
   
     arrange(number_NAs) %>% 
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
 
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, max_bf_males, max_bm_males, max_svl_males, max_hl_males, max_hw_males, max_hh_males, max_ljl_males)
+    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, max_bf, max_bm, max_svl, max_hl, max_hw, max_hh, max_ljl)
     
 
     #---------------------------------------------------------------  
@@ -245,71 +245,71 @@ rawdata <- rawdata %>%
     filter(Sex == "F" & Sex != "Unknown") %>%
     
     #As before, create new columns
-    mutate(max_bf_females = get_max(BF.MAX, BF))  %>%
-    mutate(max_bm_females = get_max(BM.MAX, BM))  %>%
-    mutate(max_svl_females = get_max(SVL.MAX, SVL))  %>%  
-    mutate(max_hl_females = get_max(HL.MAX, HL))  %>%
-    mutate(max_hw_females = get_max(HW.MAX, HW))  %>%
-    mutate(max_hh_females = get_max(HH.MAX, HH))  %>%
-    mutate(max_ljl_females = get_max(LJL.MAX, LJL))  %>%
+    mutate(max_bf = get_max(BF.MAX, BF))  %>%
+    mutate(max_bm = get_max(BM.MAX, BM))  %>%
+    mutate(max_svl = get_max(SVL.MAX, SVL))  %>%  
+    mutate(max_hl = get_max(HL.MAX, HL))  %>%
+    mutate(max_hw = get_max(HW.MAX, HW))  %>%
+    mutate(max_hh = get_max(HH.MAX, HH))  %>%
+    mutate(max_ljl = get_max(LJL.MAX, LJL))  %>%
     
     # Filter the max bite force for each species!
     group_by(BinomialReptileDatabase) %>%
-    filter(max_bf_females == max(max_bf_females)) %>%
+    filter(max_bf == max(max_bf)) %>%
     
     arrange(number_NAs) %>% 
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, max_bf_females, max_bm_females, max_svl_females, max_hl_females, max_hw_females, max_hh_females, max_ljl_females)
+    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, max_bf, max_bm, max_svl, max_hl, max_hw, max_hh, max_ljl)
 
 
     #---------------------------------------------------------------------------------------------------------------------  
-    # avg_bf_withsd_overall - average bite force + SD for each species (males and females combined)
+    # avg_bf_plus_sd_overall - average bite force + SD for each species (males and females combined)
     # The new columns of BF and all of the morphological variables + the SD were created earlier to make the script tidier
     # The code is very similar to max_bf_overall, the only difference is we are subsetting the average of BF and each of
     # the morphological variables + the SD (as a proxy for the maximum)
     #---------------------------------------------------------------------------------------------------------------------  
     
-    avg_bf_withsd_overall <- rawdata %>%
+    avg_bf_plus_sd_overall <- rawdata %>%
   
     # First, remove species with "bad" data quality that can't be used for SD/SE analysis    
       
     filter(DataQuality != "Bad") %>%
       
-    mutate(bf_withsd_overall = bf_plus_sd) %>%
+    mutate(bf_plus_sd = bf_plus_sd) %>%
       
-    mutate(svl_withsd_overall = svl_plus_sd) %>%
+    mutate(svl_plus_sd = svl_plus_sd) %>%
       
-    mutate(bm_withsd_overall = bm_plus_sd) %>%
+    mutate(bm_plus_sd = bm_plus_sd) %>%
       
-    mutate(hl_withsd_overall = hl_plus_sd) %>%
+    mutate(hl_plus_sd = hl_plus_sd) %>%
       
-    mutate(hw_withsd_overall = hw_plus_sd ) %>%
+    mutate(hw_plus_sd = hw_plus_sd ) %>%
       
-    mutate(hh_withsd_overall = hh_plus_sd) %>%
+    mutate(hh_plus_sd = hh_plus_sd) %>%
       
-    mutate(ljl_withsd_overall = ljl_plus_sd) %>%
+    mutate(ljl_plus_sd = ljl_plus_sd) %>%
     
     group_by(BinomialReptileDatabase) %>%
       
-    filter(bf_withsd_overall == max(bf_withsd_overall)) %>%
+    filter(bf_plus_sd == max(bf_plus_sd)) %>%
       
     arrange(number_NAs) %>% 
       
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
         
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_withsd_overall, bm_withsd_overall, svl_withsd_overall, hl_withsd_overall, hw_withsd_overall, hh_withsd_overall, ljl_withsd_overall)
+    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_plus_sd, bm_plus_sd, svl_plus_sd, hl_plus_sd, hw_plus_sd, hh_plus_sd, ljl_plus_sd)
       
       
       
       
     #------------------------------------------------------------------------------------  
-    # avg_bf_withsd_males  (average BF + SD) - MALES
-    # Exact same steps as avg_bf_withsd_overall, except filtering for males and removing
+    # avg_bf_plus_sd_males  (average BF + SD) - MALES
+    # Exact same steps as avg_bf_plus_sd_overall, except filtering for males and removing
     # unknown sex species
     #------------------------------------------------------------------------------------
 
   
-    avg_bf_withsd_males <- rawdata %>%
+    avg_bf_plus_sd_males <- rawdata %>%
     
     # First, remove species with "bad" data quality that can't be used for SD/SE analysis    
     filter(DataQuality != "Bad") %>%
@@ -317,41 +317,41 @@ rawdata <- rawdata %>%
     # Filter for males only and remove species with unknown sex 
     filter(Sex == "M" & Sex != "Unknown") %>%
     
-    mutate(bf_withsd_males = bf_plus_sd) %>%
+    mutate(bf_plus_sd = bf_plus_sd) %>%
     
-    mutate(svl_withsd_males = svl_plus_sd) %>%
+    mutate(svl_plus_sd = svl_plus_sd) %>%
     
-    mutate(bm_withsd_males = bm_plus_sd) %>%
+    mutate(bm_plus_sd = bm_plus_sd) %>%
     
-    mutate(hl_withsd_males = hl_plus_sd) %>%
+    mutate(hl_plus_sd = hl_plus_sd) %>%
     
-    mutate(hw_withsd_males = hw_plus_sd ) %>%
+    mutate(hw_plus_sd = hw_plus_sd ) %>%
     
-    mutate(hh_withsd_males = hh_plus_sd) %>%
+    mutate(hh_plus_sd = hh_plus_sd) %>%
     
-    mutate(ljl_withsd_males = ljl_plus_sd) %>%
+    mutate(ljl_plus_sd = ljl_plus_sd) %>%
     
     group_by(BinomialReptileDatabase) %>%
     
-    filter(bf_withsd_males == max(bf_withsd_males)) %>%
+    filter(bf_plus_sd == max(bf_plus_sd)) %>%
     
     arrange(number_NAs) %>% 
     
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
     
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_withsd_males, bm_withsd_males, svl_withsd_males, hl_withsd_males, hw_withsd_males, hh_withsd_males, ljl_withsd_males)
+    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_plus_sd, bm_plus_sd, svl_plus_sd, hl_plus_sd, hw_plus_sd, hh_plus_sd, ljl_plus_sd)
   
   
   
   
     #--------------------------------------------------------------------------------------  
-    # avg_bf_withsd_females  (average BF + SD) - FEMALES
-    # Exact same steps as avg_bf_withsd_overall, except filtering for females and removing
+    # avg_bf_plus_sd_females  (average BF + SD) - FEMALES
+    # Exact same steps as avg_bf_plus_sd_overall, except filtering for females and removing
     # unknown sex species
     #--------------------------------------------------------------------------------------  
   
   
-    avg_bf_withsd_females <- rawdata %>%
+    avg_bf_plus_sd_females <- rawdata %>%
     
     # First, remove species with "bad" data quality that can't be used for SD/SE analysis    
     filter(DataQuality != "Bad") %>%
@@ -359,29 +359,29 @@ rawdata <- rawdata %>%
     # Filter for females only and remove species with unknown sex 
     filter(Sex == "F" & Sex != "Unknown") %>%
     
-    mutate(bf_withsd_females = bf_plus_sd) %>%
+    mutate(bf_plus_sd = bf_plus_sd) %>%
     
-    mutate(svl_withsd_females = svl_plus_sd) %>%
+    mutate(svl_plus_sd = svl_plus_sd) %>%
     
-    mutate(bm_withsd_females = bm_plus_sd) %>%
+    mutate(bm_plus_sd = bm_plus_sd) %>%
     
-    mutate(hl_withsd_females = hl_plus_sd) %>%
+    mutate(hl_plus_sd = hl_plus_sd) %>%
     
-    mutate(hw_withsd_females = hw_plus_sd ) %>%
+    mutate(hw_plus_sd = hw_plus_sd ) %>%
     
-    mutate(hh_withsd_females = hh_plus_sd) %>%
+    mutate(hh_plus_sd = hh_plus_sd) %>%
     
-    mutate(ljl_withsd_females = ljl_plus_sd) %>%
+    mutate(ljl_plus_sd = ljl_plus_sd) %>%
     
     group_by(BinomialReptileDatabase) %>%
     
-    filter(bf_withsd_females == max(bf_withsd_females)) %>%
+    filter(bf_plus_sd == max(bf_plus_sd)) %>%
     
     arrange(number_NAs) %>% 
     
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
     
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_withsd_females, bm_withsd_females, svl_withsd_females, hl_withsd_females, hw_withsd_females, hh_withsd_females, ljl_withsd_females)
+    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_plus_sd, bm_plus_sd, svl_plus_sd, hl_plus_sd, hw_plus_sd, hh_plus_sd, ljl_plus_sd)
   
   
     #-----------------------------------------------------------------------------------------------------------------------  
@@ -391,34 +391,34 @@ rawdata <- rawdata %>%
     # the morphological variables + the SE (as a proxy for the maximum)
     #-----------------------------------------------------------------------------------------------------------------------
   
-    avg_bf_withse_overall <- rawdata %>%
+    avg_bf_plus_se_overall <- rawdata %>%
     
     # First, remove species with "bad" data quality that can't be used for SE analysis    
     filter(DataQuality != "Bad") %>%
     
-    mutate(bf_withse_overall = bf_plus_se) %>%
+    mutate(bf_plus_se = bf_plus_se) %>%
     
-    mutate(svl_withse_overall = svl_plus_se) %>%
+    mutate(svl_plus_se = svl_plus_se) %>%
     
-    mutate(bm_withse_overall = bm_plus_se) %>%
+    mutate(bm_plus_se = bm_plus_se) %>%
     
-    mutate(hl_withse_overall = hl_plus_se) %>%
+    mutate(hl_plus_se = hl_plus_se) %>%
     
-    mutate(hw_withse_overall = hw_plus_se ) %>%
+    mutate(hw_plus_se = hw_plus_se ) %>%
     
-    mutate(hh_withse_overall = hh_plus_se) %>%
+    mutate(hh_plus_se = hh_plus_se) %>%
     
-    mutate(ljl_withse_overall = ljl_plus_se) %>%
+    mutate(ljl_plus_se = ljl_plus_se) %>%
     
     group_by(BinomialReptileDatabase) %>%
     
-    filter(bf_withse_overall == max(bf_withse_overall)) %>%
+    filter(bf_plus_se == max(bf_plus_se)) %>%
     
     arrange(number_NAs) %>% 
     
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
     
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_withse_overall, bm_withse_overall, svl_withse_overall, hl_withse_overall, hw_withse_overall, hh_withse_overall, ljl_withse_overall)
+    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_plus_se, bm_plus_se, svl_plus_se, hl_plus_se, hw_plus_se, hh_plus_se, ljl_plus_se)
   
   
     #-------------------------------------------------------------------------------------
@@ -427,7 +427,7 @@ rawdata <- rawdata %>%
     # species of unknown sex
     #-------------------------------------------------------------------------------------      
   
-    avg_bf_withse_males <- rawdata %>%
+    avg_bf_plus_se_males <- rawdata %>%
     
     # First, remove species with "bad" data quality that can't be used for SE analysis    
     filter(DataQuality != "Bad") %>%
@@ -435,29 +435,29 @@ rawdata <- rawdata %>%
     # Filter for only males and remove species with unknown sex 
     filter(Sex == "M" & Sex != "Unknown") %>%
     
-    mutate(bf_withse_males = bf_plus_se) %>%
+    mutate(bf_plus_se = bf_plus_se) %>%
     
-    mutate(svl_withse_males = svl_plus_se) %>%
+    mutate(svl_plus_se = svl_plus_se) %>%
     
-    mutate(bm_withse_males = bm_plus_se) %>%
+    mutate(bm_plus_se = bm_plus_se) %>%
     
-    mutate(hl_withse_males = hl_plus_se) %>%
+    mutate(hl_plus_se = hl_plus_se) %>%
     
-    mutate(hw_withse_males = hw_plus_se ) %>%
+    mutate(hw_plus_se = hw_plus_se ) %>%
     
-    mutate(hh_withse_males = hh_plus_se) %>%
+    mutate(hh_plus_se = hh_plus_se) %>%
     
-    mutate(ljl_withse_males = ljl_plus_se) %>%
+    mutate(ljl_plus_se = ljl_plus_se) %>%
     
     group_by(BinomialReptileDatabase) %>%
     
-    filter(bf_withse_males == max(bf_withse_males)) %>%
+    filter(bf_plus_se == max(bf_plus_se)) %>%
     
     arrange(number_NAs) %>% 
     
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
     
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_withse_males, bm_withse_males, svl_withse_males, hl_withse_males, hw_withse_males, hh_withse_males, ljl_withse_males)
+    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_plus_se, bm_plus_se, svl_plus_se, hl_plus_se, hw_plus_se, hh_plus_se, ljl_plus_se)
   
 
     #---------------------------------------------------------------  
@@ -466,7 +466,7 @@ rawdata <- rawdata %>%
     # species of unknown sex
     #---------------------------------------------------------------    
   
-    avg_bf_withse_females <- rawdata %>%
+    avg_bf_plus_se_females <- rawdata %>%
     
     # First, remove species with "bad" data quality that can't be used for SE analysis    
     filter(DataQuality != "Bad") %>%
@@ -474,29 +474,29 @@ rawdata <- rawdata %>%
     # Filter for only females and remove species with unknown sex 
     filter(Sex == "F" & Sex != "Unknown") %>%
     
-    mutate(bf_withse_females = bf_plus_se) %>%
+    mutate(bf_plus_se = bf_plus_se) %>%
     
-    mutate(svl_withse_females = svl_plus_se) %>%
+    mutate(svl_plus_se = svl_plus_se) %>%
     
-    mutate(bm_withse_females = bm_plus_se) %>%
+    mutate(bm_plus_se = bm_plus_se) %>%
     
-    mutate(hl_withse_females = hl_plus_se) %>%
+    mutate(hl_plus_se = hl_plus_se) %>%
     
-    mutate(hw_withse_females = hw_plus_se ) %>%
+    mutate(hw_plus_se = hw_plus_se ) %>%
     
-    mutate(hh_withse_females = hh_plus_se) %>%
+    mutate(hh_plus_se = hh_plus_se) %>%
     
-    mutate(ljl_withse_females = ljl_plus_se) %>%
+    mutate(ljl_plus_se = ljl_plus_se) %>%
     
     group_by(BinomialReptileDatabase) %>%
     
-    filter(bf_withse_females == max(bf_withse_females)) %>%
+    filter(bf_plus_se == max(bf_plus_se)) %>%
     
     arrange(number_NAs) %>% 
     
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
     
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_withse_females, bm_withse_females, svl_withse_females, hl_withse_females, hw_withse_females, hh_withse_females, ljl_withse_females)
+    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_plus_se, bm_plus_se, svl_plus_se, hl_plus_se, hw_plus_se, hh_plus_se, ljl_plus_se)
   
 
 
@@ -506,12 +506,12 @@ rawdata <- rawdata %>%
     write_csv(max_bf_overall, path = "data/max_bf_overall.csv")
     write_csv(max_bf_males, path = "data/max_bf_males.csv")
     write_csv(max_bf_females, path = "data/max_bf_females.csv")
-    write_csv(avg_bf_withsd_overall, path = "data/avg_bf_withsd_overall.csv")
-    write_csv(avg_bf_withsd_males, path = "data/avg_bf_withsd_males.csv")
-    write_csv(avg_bf_withsd_females, path = "data/avg_bf_withsd_females.csv")
-    write_csv(avg_bf_withse_overall, path = "data/avg_bf_withse_overall.csv")
-    write_csv(avg_bf_withse_males, path = "data/avg_bf_withse_males.csv")
-    write_csv(avg_bf_withse_females, path = "data/avg_bf_withse_females.csv")
+    write_csv(avg_bf_plus_sd_overall, path = "data/avg_bf_plus_sd_overall.csv")
+    write_csv(avg_bf_plus_sd_males, path = "data/avg_bf_plus_sd_males.csv")
+    write_csv(avg_bf_plus_sd_females, path = "data/avg_bf_plus_sd_females.csv")
+    write_csv(avg_bf_plus_se_overall, path = "data/avg_bf_plus_se_overall.csv")
+    write_csv(avg_bf_plus_se_males, path = "data/avg_bf_plus_se_males.csv")
+    write_csv(avg_bf_plus_se_females, path = "data/avg_bf_plus_se_females.csv")
 
 
 
