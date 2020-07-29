@@ -36,7 +36,7 @@ rawdata <- read_csv("data/rawdata.csv")
 # Housekeeping
 #---------------------------------------------------------------                                                                     
 
-rawdata <- rawdata %>% 
+rawdata <- rawdata %>%  
   
   # Remove rows that have morphometric data from museums and BF data from in the field
   filter(DataQuality != "Remove") %>%
@@ -49,7 +49,16 @@ rawdata <- rawdata %>%
 
   # Replace NA values with "unknown" in sex column
   mutate(Sex = replace_na(Sex, "unknown")) %>% 
-  
+ 
+  # Append super family column
+  mutate(HigherTaxonomy = case_when(
+    Family == "Gekkonidae" | Family == "Phyllodactylidae" ~ "Gekkota",
+    Family == "Cordylidae" | Family == "Scincidae" ~ "Scincoidea", Family == "Trogonophidae" | Family == "Lacertidae" | Family == "Teiidae" ~ "Lacertoidea", 
+    Family == "Anguidae" | Family == "Xenosauridae" | Family == "Varanidae" ~ "Anguimorpha", 
+    Family == "Chamaeleonidae" | Family == "Agamidae" | Family == "Phrynosomatidae" | Family == "Iguanidae" | Family == "Crotaphytidae" | Family == "Dactyloidae" |
+      Family == "Tropiduridae" | Family == "Liolaemidae" | Family == "Leiosauridae" ~ "Iguania",
+    Family == "Sphenodontidae" ~ "Sphenodontia")) %>%
+
   
   # Convert SE to SD where we have SE but no SD 
   # Note that for BF I put SSBF (sample size for bite force)
@@ -200,7 +209,7 @@ rawdata <- rawdata %>%
    distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
   
    # Select columns we want
-   select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, max_bf, max_bm, max_svl, max_hl, max_hw, max_hh, max_ljl)
+   select(BinomialReptileDatabase, Sex, Family, HigherTaxonomy, SSM, SSBF, max_bf, max_bm, max_svl, max_hl, max_hw, max_hh, max_ljl)
   
 
     #---------------------------------------------------------------------------------    
@@ -230,7 +239,7 @@ rawdata <- rawdata %>%
     arrange(number_NAs) %>% 
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
 
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, max_bf, max_bm, max_svl, max_hl, max_hw, max_hh, max_ljl)
+    select(BinomialReptileDatabase, Sex, Family, HigherTaxonomy, SSM, SSBF, max_bf, max_bm, max_svl, max_hl, max_hw, max_hh, max_ljl)
     
 
     #---------------------------------------------------------------  
@@ -259,7 +268,7 @@ rawdata <- rawdata %>%
     
     arrange(number_NAs) %>% 
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, max_bf, max_bm, max_svl, max_hl, max_hw, max_hh, max_ljl)
+    select(BinomialReptileDatabase, Sex, Family, HigherTaxonomy, SSM, SSBF, max_bf, max_bm, max_svl, max_hl, max_hw, max_hh, max_ljl)
 
 
     #---------------------------------------------------------------------------------------------------------------------  
@@ -297,7 +306,7 @@ rawdata <- rawdata %>%
       
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
         
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_plus_sd, bm_plus_sd, svl_plus_sd, hl_plus_sd, hw_plus_sd, hh_plus_sd, ljl_plus_sd)
+    select(BinomialReptileDatabase, Sex, Family, HigherTaxonomy, SSM, SSBF, bf_plus_sd, bm_plus_sd, svl_plus_sd, hl_plus_sd, hw_plus_sd, hh_plus_sd, ljl_plus_sd)
       
       
       
@@ -339,7 +348,7 @@ rawdata <- rawdata %>%
     
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
     
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_plus_sd, bm_plus_sd, svl_plus_sd, hl_plus_sd, hw_plus_sd, hh_plus_sd, ljl_plus_sd)
+    select(BinomialReptileDatabase, Sex, Family, HigherTaxonomy, SSM, SSBF, bf_plus_sd, bm_plus_sd, svl_plus_sd, hl_plus_sd, hw_plus_sd, hh_plus_sd, ljl_plus_sd)
   
   
   
@@ -381,7 +390,7 @@ rawdata <- rawdata %>%
     
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
     
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_plus_sd, bm_plus_sd, svl_plus_sd, hl_plus_sd, hw_plus_sd, hh_plus_sd, ljl_plus_sd)
+    select(BinomialReptileDatabase, Sex, Family, HigherTaxonomy, SSM, SSBF, bf_plus_sd, bm_plus_sd, svl_plus_sd, hl_plus_sd, hw_plus_sd, hh_plus_sd, ljl_plus_sd)
   
   
     #-----------------------------------------------------------------------------------------------------------------------  
@@ -418,7 +427,7 @@ rawdata <- rawdata %>%
     
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
     
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_plus_se, bm_plus_se, svl_plus_se, hl_plus_se, hw_plus_se, hh_plus_se, ljl_plus_se)
+    select(BinomialReptileDatabase, Sex, Family, HigherTaxonomy, SSM, SSBF, bf_plus_se, bm_plus_se, svl_plus_se, hl_plus_se, hw_plus_se, hh_plus_se, ljl_plus_se)
   
   
     #-------------------------------------------------------------------------------------
@@ -457,7 +466,7 @@ rawdata <- rawdata %>%
     
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
     
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_plus_se, bm_plus_se, svl_plus_se, hl_plus_se, hw_plus_se, hh_plus_se, ljl_plus_se)
+    select(BinomialReptileDatabase, Sex, Family, HigherTaxonomy, SSM, SSBF, bf_plus_se, bm_plus_se, svl_plus_se, hl_plus_se, hw_plus_se, hh_plus_se, ljl_plus_se)
   
 
     #---------------------------------------------------------------  
@@ -496,10 +505,8 @@ rawdata <- rawdata %>%
     
     distinct(BinomialReptileDatabase, .keep_all = TRUE) %>%
     
-    select(BinomialReptileDatabase, Sex, Family, SSM, SSBF, bf_plus_se, bm_plus_se, svl_plus_se, hl_plus_se, hw_plus_se, hh_plus_se, ljl_plus_se)
+    select(BinomialReptileDatabase, Sex, Family, HigherTaxonomy, SSM, SSBF, bf_plus_se, bm_plus_se, svl_plus_se, hl_plus_se, hw_plus_se, hh_plus_se, ljl_plus_se)
   
-
-
   
     # write each dataset to csv
     write_csv(rawdata, path = "data/tidydata.csv")
@@ -512,7 +519,3 @@ rawdata <- rawdata %>%
     write_csv(avg_bf_plus_se_overall, path = "data/avg_bf_plus_se_overall.csv")
     write_csv(avg_bf_plus_se_males, path = "data/avg_bf_plus_se_males.csv")
     write_csv(avg_bf_plus_se_females, path = "data/avg_bf_plus_se_females.csv")
-
-
-
-
