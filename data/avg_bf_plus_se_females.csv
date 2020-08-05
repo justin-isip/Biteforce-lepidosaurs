@@ -48,20 +48,20 @@ Karusasaurus polyzonus,F,Cordylidae,Scincoidea,20,20,31.560958893802365,NA,106.7
 Archaeolacerta bedriagae,F,Lacertidae,Lacertoidea,7,7,4.6315218406203,NA,66.80405183549043,16.393725393319375,9.791353814911997,6.61576092031015,NA,Paleartic,Saxicolous,Omnivorous,Omnivorous,Omnivorous,50
 Lacerta bilineata,F,Lacertidae,Lacertoidea,2,2,15.560660171779821,NA,99.40208152801713,23.270710678118654,14.212132034355964,12.048528137423856,NA,Paleartic,Terrestrial,Carnivorous,Carnivorous,NA,NA
 Dalmatolacerta oxycephala,F,Lacertidae,Lacertoidea,13,13,3.09414506867883,NA,54.397690529808116,13.477350098112614,7.29414506867883,5.066410058867569,14.205085107923876,Paleartic,Saxicolous,Carnivorous,NA,NA,NA
-Lacerta trilineata,F,Lacertidae,Lacertoidea,12,12,41.73362757406661,NA,12.416824680357049,3.6983568051838733,1.7921687836487032,1.5629978213352507,2.1721687836487034,Paleartic,Arboreal/Terrestrial/Saxicolous,Omnivorous,NA,NA,NA
+Lacerta trilineata,F,Lacertidae,Lacertoidea,12,12,41.73362757406661,NA,120.68682468035705,35.91835680518387,17.272168783648702,14.252997821335251,21.072168783648703,Paleartic,Arboreal/Terrestrial/Saxicolous,Omnivorous,NA,NA,NA
 Zootoca vivipara,F,Lacertidae,Lacertoidea,16,16,1.53,2.775,51.7425,9.774999999999999,6.195,4.68,10.1975,Paleartic,Terrestrial,Carnivorous,Carnivorous,NA,NA
 Latastia longicaudata,F,Lacertidae,Lacertoidea,4,4,5,NA,79.85,18.6,9.75,8.1,NA,Afrotropic,Terrestrial,Carnivorous,Carnivorous,NA,NA
 Liolaemus baguali,F,Liolaemidae,Iguania,2,2,12.17,NA,84.44000000000001,16.15,11.55,7.81,16.87,Neotropic,Terrestrial,Carnivorous,NA,NA,NA
 Liolaemus bibronii,F,Liolaemidae,Iguania,4,4,2.76,NA,57.51,11.600000000000001,8.04,5.569999999999999,11.69,Neotropic,Terrestrial,Carnivorous,NA,NA,NA
 Liolaemus canqueli,F,Liolaemidae,Iguania,4,4,12.16,NA,90.85000000000001,17.5,11.799999999999999,8.33,18.24,Neotropic,Arboreal/Terrestrial,Omnivorous,NA,NA,NA
-Liolaemus coeruleus,F,Liolaemidae,Iguania,5,5,4.08,NA,64.42,12.64,9.32,5.8,13.24,Neotropic,Saxicolous,Omnivorous,NA,NA,NA
-Liolaemus elongatus,F,Liolaemidae,Iguania,9,9,6.73,NA,65.31,14.36,9.17,6.02,14.51,Neotropic,Terrestrial,Carnivorous,NA,NA,NA
-Liolaemus escarchadosi,F,Liolaemidae,Iguania,2,2,4.88,NA,69.2,14.83,9.25,6.02,15,Neotropic,Saxicolous,Carnivorous,NA,NA,NA
-Liolaemus fitzingerii,F,Liolaemidae,Iguania,6,6,11.26,NA,92.37,18.150000000000002,11.73,8.39,18.37,Neotropic,Terrestrial,Carnivorous,NA,NA,NA
-Liolaemus hatcheri,F,Liolaemidae,Iguania,5,5,2.74,NA,59.43,11.77,8.73,5.38,12.120000000000001,Neotropic,Terrestrial,Omnivorous,NA,NA,NA
-Liolaemus kingii,F,Liolaemidae,Iguania,7,7,9.03,NA,77.39,15.32,10.19,7.1000000000000005,15.9,Neotropic,Terrestrial,Herbivorous,NA,NA,NA
-Liolaemus kolengh,F,Liolaemidae,Iguania,4,4,2.52,NA,57.54,11.91,8.6,5.26,11.89,Neotropic,Terrestrial/Leaf Litter,Omnivorous,NA,NA,NA
-Liolaemus kriegi,F,Liolaemidae,Iguania,5,5,6,NA,78.03,16.3,11.690000000000001,7.39,16.939999999999998,Neotropic,Saxicolous,Carnivorous,NA,NA,NA
+Liolaemus kriegi,F,Liolaemidae,Iguania,5,5,6,NA,78.03,16.3,11.690000000000001,7.39,16.939999999999998,Neotropic,Saxicolous,Omnivorous,NA,NA,NA
+Liolaemus coeruleus,F,Liolaemidae,Iguania,5,5,4.08,NA,64.42,12.64,9.32,5.8,13.24,Neotropic,Terrestrial,Carnivorous,NA,NA,NA
+Liolaemus elongatus,F,Liolaemidae,Iguania,9,9,6.73,NA,65.31,14.36,9.17,6.02,14.51,Neotropic,Saxicolous,Carnivorous,NA,NA,NA
+Liolaemus escarchadosi,F,Liolaemidae,Iguania,2,2,4.88,NA,69.2,14.83,9.25,6.02,15,Neotropic,Terrestrial,Carnivorous,NA,NA,NA
+Liolaemus fitzingerii,F,Liolaemidae,Iguania,6,6,11.26,NA,92.37,18.150000000000002,11.73,8.39,18.37,Neotropic,Terrestrial,Omnivorous,NA,NA,NA
+Liolaemus hatcheri,F,Liolaemidae,Iguania,5,5,2.74,NA,59.43,11.77,8.73,5.38,12.120000000000001,Neotropic,Terrestrial,Herbivorous,NA,NA,NA
+Liolaemus kingii,F,Liolaemidae,Iguania,7,7,9.03,NA,77.39,15.32,10.19,7.1000000000000005,15.9,Neotropic,Terrestrial/Leaf Litter,Omnivorous,NA,NA,NA
+Liolaemus kolengh,F,Liolaemidae,Iguania,4,4,2.52,NA,57.54,11.91,8.6,5.26,11.89,Neotropic,Saxicolous,Carnivorous,NA,NA,NA
 Liolaemus mapuche,F,Liolaemidae,Iguania,5,5,7.15,NA,73.03,14.42,10.069999999999999,7.6000000000000005,14.879999999999999,Neotropic,Terrestrial,Carnivorous,NA,NA,NA
 Liolaemus morenoi,F,Liolaemidae,Iguania,7,7,9.45,NA,70.32000000000001,14.42,10.08,7.109999999999999,14.72,Neotropic,Terrestrial,Omnivorous,NA,NA,NA
 Liolaemus petrophilus,F,Liolaemidae,Iguania,7,7,7.789999999999999,NA,81.11,18.37,11.610000000000001,7.13,19.020000000000003,Neotropic,Saxicolous,Carnivorous,NA,NA,NA
