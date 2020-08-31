@@ -10,104 +10,770 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Load libraries
-
+```{r}
 library(tidyverse)
+library(reshape2)
+library(hrbrthemes)
+library(ggpubr)
+library(patchwork)
+```
+
 
 # The 9 data arrangements are as follows:
-# 1. A1:  maximum bite force for each species (overall, males and females)
-# 2. A1M: maximum bite force for each species (males only)
-# 3. A1F: maximum bite force for each species (females only)
-# 4. A2:  average bite force + standard deviation for each species (overall, males and females)
-# 5. A2M: average bite force + standard deviation for each species (males only)
-# 6. A2F: average bite force + standard deviation for each species (females only)
-# 7. A3:  average bite force + standard error for each species (overall, males and females)
-# 8. A3M: average bite force + standard error for each species (males only)
-# 9. A3F: average bite force + standard error for each species (females only)
+# 1. max_bf_overall:  maximum bite force for each species (overall = males and females combined)
+# 2. max_bf_males: maximum bite force for each species (males only)
+# 3. max_bf_females: maximum bite force for each species (females only)
+# 4. avg_bf_withsd_overall:  average bite force + standard deviation for each species (overall = males and females combined)
+# 5. avg_bf_withsd_males: average bite force + standard deviation for each species (males only)
+# 6. avg_bf_withsd_females: average bite force + standard deviation for each species (females only)
+# 7. avg_bf_withse_overall:  average bite force + standard error for each species (overall = males and females combined)
+# 8. avg_bf_withse_males: average bite force + standard error for each species (males only)
+# 9. Avg_bf_withse_females: average bite force + standard error for each species (females only)
+
 
 ```{r}
 # Read in the 9 datasets
-# Define Sex as a factor as otherwise treats F as false
-A1  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A1.csv", col_types = cols( Sex = col_factor())) 
-A1M  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A1M.csv", col_types = cols( Sex = col_factor())) 
-A1F  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A1F.csv", col_types = cols( Sex = col_factor())) 
-A2  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A2.csv", col_types = cols( Sex = col_factor())) 
-A2M  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A2M.csv", col_types = cols( Sex = col_factor())) 
-A2F  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A2F.csv", col_types = cols( Sex = col_factor())) 
-A3  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A3.csv", col_types = cols( Sex = col_factor())) 
-A3M  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A3M.csv", col_types = cols( Sex = col_factor())) 
-A3F  <- read_csv("C:/Users/Justin Isip/Documents/Biteforce-lepidosaurs/data/A3F.csv", col_types = cols( Sex = col_factor())) 
-```
+# For female datasets, Define sex as a factor as otherwise treats F as false
 
-## What’s the distribution of bite forces for each dataset?
-
-```{r}
-ggplot(A1, aes(x=log(MAX.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
-ggplot(A1M, aes(x=log(MAX.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
-ggplot(A1F, aes(x=log(MAX.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
-ggplot(A2, aes(x=log(SD.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
-ggplot(A2M, aes(x=log(SD.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
-ggplot(A2F, aes(x=log(SD.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
-ggplot(A3, aes(x=log(SE.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
-ggplot(A3M, aes(x=log(SE.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
-ggplot(A3F, aes(x=log(SE.BF), alpha= 0.5)) + geom_histogram(binwidth=0.5)
+max_bf_overall <- read_csv("../data/max_bf_overall.csv")
+max_bf_males <- read_csv("../data/max_bf_males.csv")
+max_bf_females <- read_csv("../data/max_bf_females.csv", col_types = cols(Sex = col_factor()))
+avg_bf_plus_se_overall <- read_csv("../data/avg_bf_plus_se_overall.csv")
+avg_bf_plus_se_males <- read_csv("../data/avg_bf_plus_se_males.csv")
+avg_bf_plus_se_females <- read_csv("../data/avg_bf_plus_se_females.csv", col_types =  cols(Sex = col_factor()))
+avg_bf_plus_sd_overall <- read_csv("../data/avg_bf_plus_sd_overall.csv")
+avg_bf_plus_sd_males <- read_csv("../data/avg_bf_plus_sd_males.csv")
+avg_bf_plus_sd_females <- read_csv("../data/avg_bf_plus_sd_females.csv", col_types =  cols(Sex = col_factor()))
 
 ```
 
-
-## What's the distribution of bite forces across males and females for MAX.BF, SD.BF and SE.BF?
-
+First, let's combine males with females, so we can compare between sexes when needed
 ```{r}
-# First bind the male df with female df
-A1MF<- bind_rows(A1F, A1M)
-A2MF<- bind_rows(A2F, A2M)
-A3MF<- bind_rows(A3F, A3M)
+max_bf_mf_combined <- bind_rows(max_bf_males, max_bf_females)
+avg_bf_plus_se_mf_combined <- bind_rows(avg_bf_plus_se_males, avg_bf_plus_se_females)
+avg_bf_plus_sd_mf_combined <- bind_rows(avg_bf_plus_sd_males, avg_bf_plus_sd_females)
+```
 
-ggplot(A1MF, aes(x = log(MAX.BF), fill = Sex)) +
-  geom_histogram(position = "identity", binwidth = 0.5, alpha = 0.6) 
-
-ggplot(A2MF, aes(x = log(SD.BF), fill = Sex)) +
-  geom_histogram(position = "identity", binwidth = 0.5, alpha = 0.6) 
-
-ggplot(A3MF, aes(x = log(SE.BF), fill = Sex)) +
-  geom_histogram(position = "identity", binwidth = 0.5, alpha = 0.6) 
+What’s the distribution of bite forces overall for each dataset? (histograms)
+```{r}
+ggplot(max_bf_overall, aes(x=log(max_bf), alpha= 0.5)) + geom_histogram(binwidth=0.5) +  
+  ggtitle("Distribution of max bf overall (M + F)")
+ggplot(max_bf_males, aes(x=log(max_bf), alpha= 0.5)) + geom_histogram(binwidth=0.5) +  
+  ggtitle("Distribution of max bf (M only)")
+ggplot(max_bf_females, aes(x=log(max_bf), alpha= 0.5)) + geom_histogram(binwidth=0.5) + 
+  ggtitle("Distribution of max bf (F only)")
+ggplot(avg_bf_plus_se_overall, aes(x=log(bf_plus_se), alpha= 0.5)) + geom_histogram(binwidth=0.5) +  
+  ggtitle("Distribution of BF + SE overall (M + F)")
+ggplot(avg_bf_plus_se_males, aes(x=log(bf_plus_se), alpha= 0.5)) + geom_histogram(binwidth=0.5)+  
+  ggtitle("Distribution of BF + SE (M only)")
+ggplot(avg_bf_plus_se_females, aes(x=log(bf_plus_se), alpha= 0.5)) + geom_histogram(binwidth=0.5) +  
+  ggtitle("Distribution of BF + SE (F only)")
+ggplot(avg_bf_plus_sd_overall, aes(x=log(bf_plus_sd), alpha= 0.5)) + geom_histogram(binwidth=0.5) +  
+  ggtitle("Distribution of BF + SD overall (M+F)")
+ggplot(avg_bf_plus_sd_males, aes(x=log(bf_plus_sd), alpha= 0.5)) + geom_histogram(binwidth=0.5) +  
+  ggtitle("Distribution of BF + SD (M only)")
+ggplot(avg_bf_plus_sd_females, aes(x=log(bf_plus_sd), alpha= 0.5)) + geom_histogram(binwidth=0.5) +  
+  ggtitle("Distribution of BF + SD (F only)")
 
 ```
 
-## What's the distribution of SVL across males and females for the 3 data arrangements?
-
+What’s the distribution of bite forces overall for each dataset? (density plots)
 ```{r}
-ggplot(A1MF, aes(x = log(MAX.SVL), fill = Sex)) +
-  geom_histogram(position = "identity", binwidth = 0.1, alpha = 0.6) 
+  ggplot(max_bf_overall, aes(x=log(max_bf))) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    ggtitle("Distribution of max bf overall (M + F)")
 
-ggplot(A2MF, aes(x = log(SD.SVL), fill = Sex)) +
-  geom_histogram(position = "identity", binwidth = 0.1, alpha = 0.6) 
-
-ggplot(A3MF, aes(x = log(SE.SVL), fill = Sex)) +
-  geom_histogram(position = "identity", binwidth = 0.1, alpha = 0.6) 
-
-```
-
-
-## What's the relationship between BF and all morphometric variables between males and females?
-
-```{r}
-ggplot(A1MF, aes(x=log(MAX.BF), y =log(MAX.SVL), shape = Sex, colour = Sex)) + 
-  geom_point() 
+  ggplot(max_bf_males, aes(x=log(max_bf))) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    ggtitle("Distribution of max bf (males)")
   
-ggplot(A1MF, aes(x=log(MAX.BF), y =log(MAX.BM), shape = Sex, colour = Sex)) + 
-geom_point() 
+    ggplot(max_bf_females, aes(x=log(max_bf))) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    ggtitle("Distribution of max bf (females)")
+    
+      ggplot(avg_bf_plus_sd_overall, aes(x=log(bf_plus_sd))) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    ggtitle("Distribution of BF + SD (overall)")
+      
+        ggplot(avg_bf_plus_sd_males, aes(x=log(bf_plus_sd))) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    ggtitle("Distribution of BF + SD (males)")
+        
+    ggplot(avg_bf_plus_sd_females, aes(x=log(bf_plus_sd))) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    ggtitle("Distribution of BF + SD (females)")
+    
+    ggplot(avg_bf_plus_se_overall, aes(x=log(bf_plus_se))) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    ggtitle("Distribution of BF + SE (overall)")
+        
+    ggplot(avg_bf_plus_se_males, aes(x=log(bf_plus_se))) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    ggtitle("Distribution of BF + SD (males)")
+        
+    ggplot(avg_bf_plus_se_females, aes(x=log(bf_plus_se))) +
+    geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+    ggtitle("Distribution of BF + SD (females)")
+```
 
-ggplot(A1MF, aes(x=log(MAX.BF), y =log(MAX.HL), shape = Sex, colour = Sex)) + 
-geom_point() 
+What's the distribution of bite forces between males and females for MAX BF, BF + SD and BF + SE? (histograms)
+```{r}
 
-ggplot(A1MF, aes(x=log(MAX.BF), y =log(MAX.HW), shape = Sex, colour = Sex)) + 
-geom_point() 
+ggplot(max_bf_mf_combined, aes(x = log(max_bf), fill = Sex)) +
+  geom_histogram(position = "identity", binwidth = 0.5, alpha = 0.6) +
+  ggtitle("Distribution of MAX BF of males and females")
 
-ggplot(A1MF, aes(x=log(MAX.BF), y =log(MAX.HH),shape = Sex, colour = Sex)) + 
-geom_point() 
+ggplot(avg_bf_plus_se_mf_combined, aes(x = log(bf_plus_se), fill = Sex)) +
+  geom_histogram(position = "identity", binwidth = 0.5, alpha = 0.6) +
+  ggtitle("Distribution of BF + SE of males and females")
 
-ggplot(A1MF, aes(x=log(MAX.BF), y =log(MAX.LJL),shape = Sex, colour = Sex)) + 
-geom_point() 
+ggplot(avg_bf_plus_sd_mf_combined, aes(x = log(bf_plus_sd), fill = Sex)) +
+  geom_histogram(position = "identity", binwidth = 0.5, alpha = 0.6) +
+  ggtitle("Distribution of BF + SD of males and females")
+
+# Males have slightly higher bite forces on average across all 3 data arrangements
+```
+
+What's the distribution of bite forces between males and females for MAX BF, BF + SD and BF + SE? (density plots)
+```{r}
+ggplot(data=max_bf_mf_combined, aes(x=log(max_bf), group=Sex, fill=Sex)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Distribution of MAX BF of males and females")
+
+ggplot(data=avg_bf_plus_sd_mf_combined, aes(x=log(bf_plus_sd), group=Sex, fill=Sex)) +
+    geom_density(adjust=1.5, alpha=.4)+
+  ggtitle("Distribution of BF + SD of males and females")
+
+
+ggplot(data=avg_bf_plus_se_mf_combined, aes(x=log(bf_plus_se), group=Sex, fill=Sex)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Distribution of BF + SE of males and females")
+# This should be included in supp info
+```
+
+What's the distribution of SVL between males and females for MAX BF, BF + SD and BF + SE? (density plots)
+```{r}
+ggplot(data=max_bf_mf_combined, aes(x=log(max_svl), group=Sex, fill=Sex)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Distribution of MAX SVL of males and females")
+
+ggplot(data=avg_bf_plus_sd_mf_combined, aes(x=log(svl_plus_sd), group=Sex, fill=Sex)) +
+    geom_density(adjust=1.5, alpha=.4)+
+  ggtitle("Distribution of SVL + SD of males and females")
+
+
+ggplot(data=avg_bf_plus_se_mf_combined, aes(x=log(svl_plus_se), group=Sex, fill=Sex)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Distribution of SVL + SE of males and females")
+
+```
+
+How are bite forces distributed across our datasets based on diet?
+```{r}
+
+max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_bf), group=MieriDiet, fill=MieriDiet, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Distribution of max_bf based on diet")
+
+avg_bf_plus_sd_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(bf_plus_sd), group=MieriDiet, fill=MieriDiet, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Distribution of bf + sd based on diet")
+
+avg_bf_plus_se_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(bf_plus_se), group=MieriDiet, fill=MieriDiet, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Distribution of bf + se based on diet")
+
+# Density plots show that herbivores have higher bite forces
+```
+
+
+How are bite forces distributed across our datasets based on Main Biogeographic Realm?
+```{r}
+
+max_bf_overall %>%
+  filter(!is.na(MainBiogeographicRealm)) %>%
+  ggplot(aes(x=log(max_bf), group=MainBiogeographicRealm, fill=MainBiogeographicRealm, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Distribution of max bf based on MBR")
+
+
+avg_bf_plus_sd_overall %>%
+  filter(!is.na(MainBiogeographicRealm)) %>%
+  ggplot(aes(x=log(bf_plus_sd), group=MainBiogeographicRealm, fill=MainBiogeographicRealm, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Distribution of bf + sd based on MBR")
+
+avg_bf_plus_se_overall %>%
+  filter(!is.na(MainBiogeographicRealm)) %>%
+  ggplot(aes(x=log(bf_plus_se), group=MainBiogeographicRealm, fill=MainBiogeographicRealm, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Distribution of bf + se based on MBR")
+```
+
+How are bite forces distributed across our datasets based on lifestyle?
+```{r}
+
+max_bf_overall %>%
+  filter(!is.na(Lifestyle)) %>%
+  ggplot(aes(x=log(max_bf), group=Lifestyle, fill=Lifestyle, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Distribution of max bf based on Lifestyle")
+
+
+avg_bf_plus_sd_overall %>%
+  filter(!is.na(Lifestyle)) %>%
+  ggplot(aes(x=log(bf_plus_sd), group=Lifestyle, fill=Lifestyle, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Distribution of bf + sd based on Lifestyle")
+
+avg_bf_plus_se_overall %>%
+  filter(!is.na(Lifestyle)) %>%
+  ggplot(aes(x=log(bf_plus_se), group=Lifestyle, fill=Lifestyle, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) +
+  ggtitle("Distribution of bf + se based on Lifestyle")
+
+```
+
+What's the distribution of SVL across males and females for the 3 data arrangements? (histogram)
+```{r}
+
+ggplot(max_bf_mf_combined, aes(x = log(max_svl), fill = Sex)) +
+  geom_histogram(position = "identity", binwidth = 0.1, alpha = 0.6) 
+
+ggplot(avg_bf_plus_se_mf_combined, aes(x = log(svl_plus_se), fill = Sex)) +
+  geom_histogram(position = "identity", binwidth = 0.1, alpha = 0.6) 
+
+ggplot(avg_bf_plus_sd_mf_combined, aes(x = log(svl_plus_sd), fill = Sex)) +
+  geom_histogram(position = "identity", binwidth = 0.1, alpha = 0.6) 
+
+```
+
+What's the relationship between BF and all morphometric variables based on sex? (max bf combined)
+```{r}
+ggplot(max_bf_mf_combined, aes(x=log(max_bf), y =log(max_svl), shape = Sex, colour = Sex)) + 
+  geom_point() 
+
+ggplot(max_bf_mf_combined, aes(x=log(max_bf), y =log(max_bm), shape = Sex, colour = Sex)) + 
+  geom_point() 
+
+ggplot(max_bf_mf_combined, aes(x=log(max_bf), y =log(max_hl), shape = Sex, colour = Sex)) + 
+  geom_point() 
+
+ggplot(max_bf_mf_combined, aes(x=log(max_bf), y =log(max_hh), shape = Sex, colour = Sex)) + 
+  geom_point() 
+
+ggplot(max_bf_mf_combined, aes(x=log(max_bf), y =log(max_hw), shape = Sex, colour = Sex)) + 
+  geom_point() 
+
+ggplot(max_bf_mf_combined, aes(x=log(max_bf), y =log(max_ljl), shape = Sex, colour = Sex)) + 
+  geom_point() 
+
+#There is a positive correlation between BF and all morphometric variables, however there are no clear patterns between sexes
+```
+
+What's the relationship between BF and all morphometric variables based on Family?	(max bf overall)
+```{r}
+ggplot(max_bf_overall, aes(x=log(max_bf), y =log(max_svl), shape = Family, colour = Family)) + 
+  geom_point(alpha = 0.5) +
+    scale_shape_manual(values=seq(0,20))
+
+ggplot(max_bf_overall, aes(x=log(max_bf), y =log(max_bm), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+ggplot(max_bf_overall, aes(x=log(max_bf), y =log(max_hl), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+ggplot(max_bf_overall, aes(x=log(max_bf), y =log(max_hh), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+ggplot(max_bf_overall, aes(x=log(max_bf), y =log(max_hw), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+ggplot(max_bf_overall, aes(x=log(max_bf), y =log(max_ljl), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+```
+
+
+What's the relationship between BF and all morphometric variables based on Family?	(avg_bf_plus_sd_overall)
+```{r}
+ggplot(avg_bf_plus_sd_overall, aes(x=log(bf_plus_sd), y =log(svl_plus_sd), shape = Family, colour = Family)) + 
+  geom_point(alpha = 0.5) +
+    scale_shape_manual(values=seq(0,20))
+
+ggplot(avg_bf_plus_sd_overall, aes(x=log(bf_plus_sd), y =log(bm_plus_sd), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+ggplot(avg_bf_plus_sd_overall, aes(x=log(bf_plus_sd), y =log(hl_plus_sd), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+ggplot(avg_bf_plus_sd_overall, aes(x=log(bf_plus_sd), y =log(hh_plus_sd), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+ggplot(avg_bf_plus_sd_overall, aes(x=log(bf_plus_sd), y =log(hw_plus_sd), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+ggplot(avg_bf_plus_sd_overall, aes(x=log(bf_plus_sd), y =log(ljl_plus_sd), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+```
+
+Patchwork grid of distribution of all variables (max_bf_overall dataset)
+```{r}
+#library(patchwork)
+p1 <-  ggplot(max_bf_overall, aes(x=log(max_bf))) +
+    geom_density(color="blue", fill="blue", alpha=0.8) +
+    ggtitle("Distribution of max bf")
+
+p2 <-  ggplot(max_bf_overall, aes(x=log(max_svl))) +
+    geom_density(colour = "red", fill = "red", alpha=0.8) +
+    ggtitle("Distribution of max svl")
+
+p3 <-  ggplot(max_bf_overall, aes(x=log(max_bm))) +
+    geom_density(colour = "green", fill = "green",  alpha=0.8) +
+    ggtitle("Distribution of max bm")
+
+p4 <-  ggplot(max_bf_overall, aes(x=log(max_hl))) +
+    geom_density(colour = "yellow", fill = "yellow",  alpha=0.8) +
+    ggtitle("Distribution of max hl")
+
+p5 <-  ggplot(max_bf_overall, aes(x=log(max_hh))) +
+    geom_density(colour = "purple", fill = "purple",  alpha=0.8) +
+    ggtitle("Distribution of max hh")
+
+p6 <-  ggplot(max_bf_overall, aes(x=log(max_hw))) +
+    geom_density(colour = "brown", fill = "brown",  alpha=0.8) +
+    ggtitle("Distribution of max hw")
+
+p7 <-  ggplot(max_bf_overall, aes(x=log(max_ljl))) +
+    geom_density(colour = "orange", fill = "orange",  alpha=0.8) +
+    ggtitle("Distribution of max ljl")
+
+
+
+p1 + p2 + p3 + p4 + p5 + p6 + p7 + plot_layout(nrow = 3, byrow = F)
 ```
 	
+	
+How are all of the variables distributed based on diet?
+```{r}
+p8 <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_bf), group=MieriDiet, fill=MieriDiet, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) 
+  
+
+p9 <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_svl), group=MieriDiet, fill=MieriDiet, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) 
+ 
+
+p10 <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_bm), group=MieriDiet, fill=MieriDiet, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) 
+
+
+p11 <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_hl), group=MieriDiet, fill=MieriDiet, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) 
+ 
+
+p12 <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_hw), group=MieriDiet, fill=MieriDiet, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) 
+
+
+p13 <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_hh), group=MieriDiet, fill=MieriDiet, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) 
+
+p14 <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_ljl), group=MieriDiet, fill=MieriDiet, na.rm = T)) +
+    geom_density(adjust=1.5, alpha=.4) 
+
+
+
+ggarrange(p8 , p9 , p10 , p11 ,p12 ,p13 , p14, ncol = 3, nrow = 3, common.legend = TRUE, legend ="bottom")  +  plot_annotation(title = "Distribution of all the variables based on diet")
+
+
+```
+
+
+How are all the variables distributed based on sex?
+```{r}
+
+p15 <- max_bf_mf_combined %>%
+  ggplot(aes(x=log(max_bf), group=Sex, fill=Sex)) +
+    geom_density( alpha= 0.3) +
+  theme_bw() +
+  xlab("log(BF) (N)")+
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15),
+        legend.text = element_text(size = 15),
+        legend.title = element_text(size = 15)) +
+  scale_fill_discrete(name = "Sex", labels = c("Female", "Male"))
+
+
+p16<- max_bf_mf_combined %>%
+  ggplot(aes(x=log(max_svl), group=Sex, fill=Sex)) +
+    geom_density(alpha=0.3) +
+  theme_bw() +
+  xlab("log(SVL) (mm)") +
+  ylim(0,1.5) +
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15))
+ 
+
+p17 <- max_bf_mf_combined %>%
+  ggplot(aes(x=log(max_bm), group=Sex, fill=Sex)) +
+    geom_density(alpha=0.3) +
+  theme_bw() +
+  xlab("log(BM) (g)") +
+  ylim(0, 0.3) +
+  xlim(0,6)+
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15))
+
+
+p18 <- max_bf_mf_combined %>%
+  ggplot(aes(x=log(max_hl), group=Sex, fill=Sex)) +
+  geom_density(alpha=0.3) +
+  theme_bw() +
+  xlab("log(HL) (mm)") +
+  ylim(0,1.5)+
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15))
+
+ 
+
+p19 <- max_bf_mf_combined %>%
+  ggplot(aes(x=log(max_hw), group=Sex, fill=Sex)) +
+    geom_density(alpha=0.3) +
+  theme_bw() +
+  ylim(0,1.5) +
+  xlab("log(HW) (mm)") +
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15))
+
+
+p20 <- max_bf_mf_combined %>%
+  ggplot(aes(x=log(max_hh), group=Sex, fill=Sex)) +
+    geom_density(alpha=0.3) +
+  theme_bw() +
+  ylim(0,1.5) +
+  xlab("log(HH) (mm)") +
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15))
+ 
+
+p21 <- max_bf_mf_combined %>%
+  ggplot(aes(x=log(max_ljl), group=Sex, fill=Sex)) +
+    geom_density(alpha=0.3) +
+  theme_bw() +
+  ylim(0,1.5) +
+  xlab("log(LJL) (mm)") +
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15))
+
+
+
+ggarrange(p15,p16,p17,p18,p19,p20,p21, ncol = 2, nrow = 4, common.legend = TRUE, legend ="bottom")
+
+ggsave("../figures/male-female-density-plots.png", dpi = 300)
+```
+
+
+How are all the variables distributed based on families?
+```{r}
+
+p22 <- max_bf_overall %>%
+  ggplot(aes(x=log(max_bf), group=Family, fill=Family)) +
+    geom_density(adjust=1.5, alpha=.4) +
+facet_wrap(~Family)
+  
+
+p23<- max_bf_overall %>%
+  ggplot(aes(x=log(max_svl), group=Family, fill=Family)) +
+    geom_density(adjust=1.5, alpha=.4)  +
+facet_wrap(~Family)
+ 
+
+p24 <- max_bf_overall %>%
+  ggplot(aes(x=log(max_bm), group=Family, fill=Family)) +
+    geom_density(adjust=1.5, alpha=.4) 
+
+
+p25 <- max_bf_overall %>%
+  ggplot(aes(x=log(max_hl), group=Family, fill=Family)) +
+    geom_density(adjust=1.5, alpha=.4) 
+ 
+
+p26 <- max_bf_overall %>%
+  ggplot(aes(x=log(max_hw), group=Family, fill=Family)) +
+    geom_density(adjust=1.5, alpha=.4) 
+
+
+p27 <- max_bf_overall %>%
+  ggplot(aes(x=log(max_hh), group=Family, fill=Family)) +
+    geom_density(adjust=1.5, alpha=.4) 
+
+p28 <- max_bf_overall %>%
+  ggplot(aes(x=log(max_ljl), group=Family, fill=Family)) +
+    geom_density(adjust=1.5, alpha=.4) 
+
+
+
+ggarrange(p22, p23 , p24 , p25, ncol = 2, nrow = 2, common.legend = TRUE, legend ="bottom")  +  plot_annotation(title = "Distribution of all the variables based on Family")
+
+
+ggarrange(p26 ,p27 ,p28, ncol = 2, nrow = 2, common.legend = TRUE, legend ="bottom")  +  plot_annotation(title = "Distribution of all the variables based on Family")
+
+
+```
+
+How are all the variables distributed based on lifestyle?
+```{r}
+
+life1 <- max_bf_overall %>%
+  ggplot(aes(x=log(max_bf), group=Lifestyle, fill=Lifestyle)) +
+    geom_density(adjust=1.5, alpha=.4) +
+facet_wrap(~Lifestyle)
+  
+
+life2 <- max_bf_overall %>%
+  ggplot(aes(x=log(max_svl), group=Lifestyle, fill=Lifestyle)) +
+    geom_density(adjust=1.5, alpha=.4)  +
+facet_wrap(~Lifestyle)
+ 
+
+life3 <- max_bf_overall %>%
+  ggplot(aes(x=log(max_bm), group=Lifestyle, fill=Lifestyle)) +
+    geom_density(adjust=1.5, alpha=.4)  +
+facet_wrap(~Lifestyle)
+
+
+life4 <- max_bf_overall %>%
+  ggplot(aes(x=log(max_hl), group=Lifestyle, fill=Lifestyle)) +
+    geom_density(adjust=1.5, alpha=.4)  +
+facet_wrap(~Lifestyle)
+ 
+
+life5 <- max_bf_overall %>%
+  ggplot(aes(x=log(max_hw), group=Lifestyle, fill=Lifestyle)) +
+    geom_density(adjust=1.5, alpha=.4)  +
+facet_wrap(~Lifestyle)
+
+
+life6 <- max_bf_overall %>%
+  ggplot(aes(x=log(max_hh), group=Lifestyle, fill=Lifestyle)) +
+    geom_density(adjust=1.5, alpha=.4)  +
+facet_wrap(~Lifestyle)
+
+life7 <- max_bf_overall %>%
+  ggplot(aes(x=log(max_ljl), group=Lifestyle, fill=Lifestyle)) +
+    geom_density(adjust=1.5, alpha=.4)  +
+facet_wrap(~Lifestyle)
+
+
+
+life1
+life2
+life3
+life4
+life5
+life6
+life7
+
+```
+
+
+What's the relationship between BF and all morphometric variables based on diet?	(max bf)
+```{r}
+  
+p29 <- max_bf_overall %>% 
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_svl), y =log(max_bf), shape = MieriDiet, colour = MieriDiet)) + 
+  geom_point() 
+
+p30 <-  max_bf_overall %>% 
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_bm), y =log(max_bf), shape = MieriDiet, colour = MieriDiet)) + 
+  geom_point() 
+
+p31 <- max_bf_overall %>% 
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_hl), y =log(max_bf), shape = MieriDiet, colour = MieriDiet)) + 
+  geom_point() 
+
+p32 <- max_bf_overall %>% 
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_hh), y =log(max_bf), shape = MieriDiet, colour = MieriDiet)) + 
+  geom_point() 
+
+p33 <-  max_bf_overall %>% 
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_hw), y =log(max_bf), shape = MieriDiet, colour = MieriDiet)) + 
+  geom_point() 
+
+p34 <- max_bf_overall %>% 
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=log(max_ljl), y =log(max_bf), shape = MieriDiet, colour = MieriDiet)) + 
+  geom_point() 
+
+ggarrange( p29 , p30 , p31 ,p32 ,p33 ,p34,  ncol = 3, nrow = 2, common.legend = TRUE, legend ="bottom")  +  plot_annotation(title = "Relationship between BF and all morphological variables")
+
+
+
+```
+
+## What's the relationship between BF and all morphometric variables based on Family?	(max bf)
+	
+```{r}
+  
+p41 <- max_bf_overall %>% 
+  ggplot(aes(x=log(max_svl), y =log(max_bf), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+p42 <-  max_bf_overall %>% 
+  ggplot(aes(x=log(max_bm), y =log(max_bf), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+p43 <- max_bf_overall %>% 
+  ggplot(aes(x=log(max_hl), y =log(max_bf), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+p44 <- max_bf_overall %>% 
+  ggplot(aes(x=log(max_hh), y =log(max_bf), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+p45 <-  max_bf_overall %>% 
+  ggplot(aes(x=log(max_hw), y =log(max_bf), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+p46 <- max_bf_overall %>% 
+  ggplot(aes(x=log(max_ljl), y =log(max_bf), shape = Family, colour = Family)) + 
+  geom_point() +
+    scale_shape_manual(values=seq(0,20))
+
+ggarrange( p41 , p42, ncol = 2, common.legend = TRUE, legend ="bottom")  +  plot_annotation(title = "Relationship between BF and all morphological variables")
+
+ggarrange( p43 , p44, ncol = 2, common.legend = TRUE, legend ="bottom")  +  plot_annotation(title = "Relationship between BF and all morphological variables")
+
+ggarrange(p45 ,p46,   ncol = 2, common.legend = TRUE, legend ="bottom")  +  plot_annotation(title = "Relationship between BF and all morphological variables")
+
+```
+
+## How is bite force distributed based on family?
+```{r}
+
+p35 <-ggplot(max_bf_overall,aes(x=Family,y=log(max_bf),color=Family))+
+  geom_boxplot(show.legend=F,fill="white")+
+  geom_jitter(show.legend=F,alpha=0.4) +
+  xlab("Family") + ylab("log(max_bf)") +
+  ggtitle("Distribution of max bf based on Family") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    panel.spacing = unit(0, "lines")
+  )
+
+p36 <- ggplot(max_bf_overall,aes(x=Family,y=log(max_svl),color=Family))+
+  geom_boxplot(show.legend=F,fill="white")+
+  geom_jitter(show.legend=F,alpha=0.4) +
+  xlab("Family") + ylab("log(max_svl)") +
+  ggtitle("Distribution of max svl based on Family") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme(
+    strip.background = element_blank(),
+    strip.text.x = element_blank(),
+    panel.spacing = unit(0, "lines")
+  )
+
+
+
+p37 <- max_bf_overall %>%
+  ggplot(aes(x=Lifestyle,y=log(max_bf),color=Lifestyle))+
+  geom_boxplot(show.legend=F,fill="white")+
+  geom_jitter(show.legend=F,alpha=0.2) +
+  ggtitle("Distribution of max bf based on lifestyle")+
+  facet_grid(.~Lifestyle,scales="free",space="free_x") +
+  theme(axis.title.x = element_blank())
+
+p38 <- max_bf_overall %>%
+  ggplot(aes(x=MainBiogeographicRealm,y=log(max_bf),color=MainBiogeographicRealm))+
+  geom_boxplot(show.legend=F,fill="white")+
+  geom_jitter(show.legend=F,alpha=0.2) +
+  ggtitle("Distribution of max bf based on MBR")+
+  facet_grid(.~MainBiogeographicRealm, scales="free",space="free_x") +
+   theme(axis.title.x = element_blank())
+
+p39 <- avg_bf_plus_sd_mf_combined %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=MieriDiet,y=log(bf_plus_sd),color=Sex))+
+  geom_boxplot(show.legend=T,fill="white")+
+  geom_jitter(show.legend=F,alpha=0.2) +
+  ggtitle("Distribution of max bf between sexes based on diet")+
+  facet_grid(.~MainBiogeographicRealm, scales="free",space="free_x") +
+   theme(axis.title.x = element_blank())
+
+
+p40 <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=MieriDiet,y=log(max_bf),color=MieriDiet))+
+  geom_boxplot(show.legend=T,fill="white")+
+  geom_jitter(show.legend=F,alpha=0.2) +
+  ggtitle("Distribution of max bf based on diet")+
+  facet_grid(.~MieriDiet, scales="free",space="free_x") +
+   theme(axis.title.x = element_blank())
+
+
+p35
+p36
+p37
+p38
+p39
+p40
+```
+
+
 	

@@ -13,25 +13,29 @@ library(forestmangr)
 # Family          | Total species number
 #---------------------------------------------------------------
 # Agamidae        | 526 
-# Anguidae        | 85 
 # Chameleonidae   | 217 
-# Cordylidae      | 70 
 # Crotaphytidae   | 12 
 # Dactyloidae     | 436
-# Gekkonidae      | 1331
 # Iguanidae       | 44
-# Lacertidae      | 347
-# Leiosauridae    | 34
 # Liolaemidae     | 320
 # Phrynosomatidae | 162 
-# Phyllodactylidae| 150
-# Scincidae       | 1685
-# Shenodontidae   | 1 
+# Tropiduridae    | 136
+# Lacertidae      | 347
 # Teiidae         | 162
 # Trogonophidae   | 6
-# Tropiduridae    | 136
+# Cordylidae      | 70 
+# Scincidae       | 1685
+# Anguidae        | 85 
 # Varanidae       | 81
 # Xenosauridae    | 12
+# Gekkonidae      | 1331
+# Phyllodactylidae| 150
+# Shenodontidae   | 1 
+# Leiosauridae    | 34
+
+
+
+
 
 
 
@@ -74,3 +78,29 @@ ggplot(family_coverage, aes(fill=PercentCoverage, y = OurSpNumber, x=reorder(Fam
   labs(y = "Number of species in our study", x = "Family")
 
 
+#  New code
+
+sp_number <- 
+  max_bf_overall %>% 
+  count(Family)
+
+superfamily <- max_bf_overall %>% select(Family, HigherTaxonomy) %>% distinct()
+
+superfamily <- full_join(sp_number, superfamily, by = "Family")
+
+
+ggplot(superfamily, aes(colour = HigherTaxonomy, fill = HigherTaxonomy, y = n, x=Family)) + 
+  geom_bar(position = position_stack(reverse = TRUE), stat="identity") +
+  coord_flip() +
+  theme_bw() +
+  scale_y_continuous(breaks=seq(0,45,5)) +
+  labs(y = "Number of species in my dataset", x = "Family", colour = "Superfamily/Infraorder", fill = "Superfamily/Infraorder") +
+theme(axis.text.x = element_text(size = 15),
+      axis.text.y = element_text(size = 15),
+      axis.title.x = element_text(size = 15),
+      axis.title.y = element_text(size = 15),
+      legend.text = element_text(size = 15),
+      legend.title = element_text(size = 15))
+
+ggsave("figures/family-percentage-cover.png", dpi = 300, height = 6, width = 10)
+  
