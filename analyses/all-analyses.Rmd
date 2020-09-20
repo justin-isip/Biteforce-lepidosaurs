@@ -1,0 +1,1175 @@
+---
+title: "PGLS_models.Rmd"
+author: "Justin Ephraim Isip"
+date: "29/07/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## PGLS models
+
+Load the required packages
+```{r}
+library(ape)
+library(geiger)
+library(picante)
+library(caper)
+library(tidyverse)
+library(rlist)
+library(phytools)
+library(ggpubr)
+library(ggfortify)
+library(patchwork)
+library(scales)
+```
+
+
+# Read in my dataset
+# For female datasets, Define sex as a factor as otherwise treats F as false
+# Just focusing on max_bf for the analysis
+
+```{r}
+max_bf_overall <- read.csv("Biteforce-lepidosaurs/data/max_bf_overall.csv", stringsAsFactors = T)
+#max_bf_males <- read_csv("Biteforce-lepidosaurs/data/max_bf_males.csv")
+#max_bf_females <- read_csv("Biteforce-lepidosaurs/data/max_bf_females.csv", col_types =  cols(Sex = col_factor()))
+```
+
+# Read and check my phylogeny
+
+```{r}
+lepidosaurtree <- read.tree("Biteforce-lepidosaurs/WrightTree.nex")
+```
+
+
+# Let's have a look at the tree
+
+```{r}
+lepidosaurtree
+str(lepidosaurtree)
+par(mar = c(0,0,0,0))
+plot(lepidosaurtree, cex = 0.2, typ = "fan")
+par(mar = c(4,4,2,2))
+
+```
+
+
+# lepidosaurtree 4162 species and 4161 internal nodes. Lets check whether my tree is dichomotomous
+
+```{r}
+is.binary.tree(lepidosaurtree)
+# TRUE!
+# Our tree is also rooted!
+```
+
+
+# Replace spaces with _ so they match up with species names in the tree
+
+```{r}
+max_bf_overall$BinomialReptileDatabase <- gsub(" ", "_", max_bf_overall$BinomialReptileDatabase)
+```
+
+# Lets check mismatches between species in my data and phylogeny
+
+```{r}
+check <- name.check(phy = lepidosaurtree, data = max_bf_overall, data.names = max_bf_overall$BinomialReptileDatabase)
+#check
+```
+
+# Replace more recent taxonomic names in my dataset to match older names in my tree
+
+```{r}
+# check$tree_not_data[check$tree_not_data == "Tapinurus_scutipunctatus"] - this checks tree for old species names using reptile DB
+
+lepidosaurtree$tip.label <- gsub("Typhlosaurus_lineatus", "Acontias_kgalagadi", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Glaphyromorphus_isolepis", "Eremiascincus_isolepis", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Cordylus_cataphractus", "Ouroborus_cataphractus", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Cordylus_warreni", "Smaug_mossambicus", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Uromastyx_acanthinura", "Uromastix_acanthinura", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Microacontias_litoralis", "Acontias_litoralis", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Cryptoblepharus_boutonii", "Cryptoblepharus_metallicus", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Gallotia_gomerana", "Gallotia_bravoana", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Liolaemus_zullyi", "Liolaemus_zullyae", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Podarcis_atrata", "Podarcis_liolepis", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Laudakia_stellio", "Stellagama_stellio", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Bradypodion_caffrum", "Bradypodion_caffer", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Cordylus_polyzonus", "Karusasaurus_polyzonus", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Lygosoma_afrum", "Mochlus_sundevallii", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Tupinambis_merianae", "Salvator_merianae", lepidosaurtree$tip.label)
+```
+
+
+
+Add the missing species into our tree based on literature searches
+
+```{r}
+#which(check$tree_not_data == "Bradypodion_caeruleogula")
+#check$tree_not_data[check$tree_not_data == "Bradypodion_caeruleogula"]
+#lepidosaurtree$tip.label[lepidosaurtree$tip.label == "Diplolaemus_sexinctus"]
+#which(lepidosaurtree$tip.label == "Aspidoscelis_flagellicauda") - extract tip number for a species
+
+
+lepidosaurtree <- bind.tip(lepidosaurtree, tip.label = "Bradypodion_kentanicum",
+                           where = 2446, position = 0.1)
+lepidosaurtree <- bind.tip(lepidosaurtree, tip.label = "Liolaemus_mapuche",
+                           where = 2768, position = 0.1)
+lepidosaurtree <- bind.tip(lepidosaurtree, tip.label = "Bradypodion_caeruleogula",
+                           where = 6618, position = 0.5)
+lepidosaurtree <- bind.tip(lepidosaurtree, tip.label = "Xenosaurus_newmanorum",
+                           where = 3341, position = 0.1)
+lepidosaurtree <- bind.tip(lepidosaurtree, tip.label = "Anolis_pentaprion",
+                           where = 2970, position = 0.1)
+
+#zoom(lepidosaurtree, 2970:2971 , subtree = TRUE) - search the tree based on node/tips
+#getParent(lepidosaurtree, node = 2768) - get parent node 
+#zoom(lepidosaurtree, grep("Bradypodion", lepidosaurtree$tip.label)) - search tree based on character string e.g genus
+
+#plot(lepidosaurtree)
+```
+
+# Drop species missing from the tree which aren't in our data using drop.tip
+
+```{r}
+lepidosaurtree <- drop.tip(lepidosaurtree, check$tree_not_data)
+```
+
+# Remove species from the data which are not in the tree
+
+```{r}
+# "Aspidoscelis_sonorae"     "Diplolaemus_leopardinus"  "Tropidurus_semitaeniatus"
+matches <- match(max_bf_overall$BinomialReptileDatabase, check$data_not_tree, nomatch = 0)
+max_bf_overall <- subset(max_bf_overall, matches == 0)
+```
+
+# Attach the phylogeny to our data
+```{r}
+# main dataset with all data
+lepidosaur <- comparative.data(phy = lepidosaurtree, data = max_bf_overall, 
+                               names.col =BinomialReptileDatabase, vcv = TRUE,
+                                warn.dropped = TRUE, na.omit = FALSE)
+
+# Remove Sphenodon and Gekkota for bf ~ head morph * HigherTaxonomy
+# Sphenedon is 1 sp and Gekkota only has 2 sp with missing data
+max_bf_no_SP_Gekko <- max_bf_overall %>%
+  filter(HigherTaxonomy != "Sphenodontia")%>%
+  filter(HigherTaxonomy != "Gekkota") %>%
+  droplevels()
+
+# Create another comparative data without Sphenodon and Gekkota
+lepidosaur_no_SP_Gekko <- comparative.data(phy = lepidosaurtree, data = max_bf_no_SP_Gekko, 
+                               names.col =BinomialReptileDatabase, vcv = TRUE,
+                                warn.dropped = TRUE, na.omit = FALSE)
+
+lepidosaur_no_SP_Gekko$dropped$tips
+lepidosaur_no_SP_Gekko$dropped$unmatched.rows
+
+# Remove Sphenodon Gekkota and Anguimorpha for bf ~ bm * HigherTaxonomy analysis
+# No Anguimorpha specimens have bm data
+max_bf_no_SP_Gekko_Angui <- max_bf_overall %>%
+  filter(HigherTaxonomy != "Sphenodontia")%>%
+  filter(HigherTaxonomy != "Gekkota") %>%
+  filter(HigherTaxonomy != "Anguimorpha") %>%
+  droplevels()
+
+# Create another comparative data without Sphenodon and Gekkota
+lepidosaur_no_SP_Gekko_Angui <- comparative.data(phy = lepidosaurtree, data = max_bf_no_SP_Gekko_Angui, 
+                               names.col =BinomialReptileDatabase, vcv = TRUE,
+                                warn.dropped = TRUE, na.omit = FALSE)
+
+lepidosaur_no_SP_Gekko_Angui$dropped$tips
+lepidosaur_no_SP_Gekko_Angui$dropped$unmatched.rows
+
+
+#plot(lepidosaurtree, cex = 0.4)
+
+```
+
+Patchwork grid of distribution of all variables (max_bf_overall dataset)
+```{r}
+#library(patchwork)
+#library(grid)
+
+#Helper function for plotting
+remove_x <-   
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+remove_y <- 
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", 
+               "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+
+bf_distribution <-  ggplot(max_bf_overall, aes(x=log(max_bf))) +
+  geom_density(color=cbPalette[2], fill=cbPalette[2], alpha=0.3) +
+  theme_bw() +
+  xlab("log(BF) (N)") +
+  annotate(geom = "text",x = 5, y = 0.3,label = "n = 161", size = 6) +
+  theme(axis.text.x = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"),
+        axis.text.y = element_text(size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"),  
+        axis.title.x = element_text(size = 15, angle = 0, vjust = 0, face = "plain"),
+        axis.title.y = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"))
+
+
+svl_distribution <-  ggplot(max_bf_overall, aes(x=log(max_svl))) +
+  geom_density(colour = cbPalette[1], fill = cbPalette[1], alpha=0.3) +
+  theme_bw() +
+  xlab("log(SVL) (mm)") +
+  annotate(geom = "text", x = 5.47, y = 1, label = "n = 161", size = 6) +
+  ylim(0,1.2)+
+  theme(axis.text.x = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"),
+        axis.text.y = element_text(size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"),  
+        axis.title.x = element_text(size = 15, angle = 0, vjust = 0, face = "plain"),
+        axis.title.y = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"))
+
+bm_distribution <-  ggplot(max_bf_overall, aes(x=log(max_bm))) +
+  geom_density(colour = cbPalette[3], fill = cbPalette[3],  alpha=0.3) +
+  theme_bw() +
+  xlab("log(BM) (g)") +
+  annotate(geom = "text", x = 5.5, y = 0.26, label = "n = 42", size = 6) +
+  ylim(0,0.3)+
+  theme(axis.text.x = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"),
+        axis.text.y = element_text(size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"),  
+        axis.title.x = element_text(size = 15, angle = 0, vjust = 0, face = "plain"),
+        axis.title.y = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"))
+
+
+hl_distribution <-  ggplot(max_bf_overall, aes(x=log(max_hl))) +
+  geom_density(colour = cbPalette[4], fill = cbPalette[4],  alpha=0.3) +
+  theme_bw() +
+  xlab("log(HL) (mm)") +
+  annotate(geom = "text", x = 4, y = 1, label = "n = 136", size = 6)+
+  ylim(0,1.2)+
+  theme(axis.text.x = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"),
+        axis.text.y = element_text(size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"),  
+        axis.title.x = element_text(size = 15, angle = 0, vjust = 0, face = "plain"),
+        axis.title.y = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"))
+
+hh_distribution <-  ggplot(max_bf_overall, aes(x=log(max_hh))) +
+  geom_density(colour = cbPalette[5], fill = cbPalette[5],  alpha=0.3) +
+  theme_bw() +
+  xlab("log(HH) (mm)") +
+  annotate(geom = "text", x = 3.5, y = 0.8, label = "n = 136", size = 6)+
+  ylim(0, 1)+
+  theme(axis.text.x = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"),
+        axis.text.y = element_text(size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"),  
+        axis.title.x = element_text(size = 15, angle = 0, vjust = 0, face = "plain"),
+        axis.title.y = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"))
+ 
+
+hw_distribution <-  ggplot(max_bf_overall, aes(x=log(max_hw))) +
+  geom_density(colour = cbPalette[6], fill = cbPalette[6],  alpha=0.3) +
+  theme_bw() +
+  xlab("log(HW) (mm)") +
+  annotate(geom = "text", x = 3.55, y = 0.8, label = "n = 142", size = 6)+
+  ylim(0, 1)+
+  theme(axis.text.x = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"),
+        axis.text.y = element_text(size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"),  
+        axis.title.x = element_text(size = 15, angle = 0, vjust = 0, face = "plain"),
+        axis.title.y = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"))
+
+ljl_distribution <-  ggplot(max_bf_overall, aes(x=log(max_ljl))) +
+  geom_density(colour = cbPalette[7], fill = cbPalette[7],  alpha=0.3) +
+  theme_bw() +
+  xlab("log(LJL) (mm)") +
+  annotate(geom = "text", x = 4, y = 0.8, label = "n = 93", size = 6)+
+  theme(axis.text.x = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"),
+        axis.text.y = element_text(size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"),  
+        axis.title.x = element_text(size = 15, angle = 0, vjust = 0, face = "plain"),
+        axis.title.y = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"))
+
+
+bf_distribution + svl_distribution + bm_distribution+ hl_distribution + hw_distribution + hh_distribution + ljl_distribution + plot_layout(ncol = 2, nrow = 4, byrow = T)
+
+ggsave("biteforce-lepidosaurs/figures/bf-morph-density.png", dpi = 300, height = 10, width = 8)
+```
+
+
+### BF vs Infraorder/SuperFamily and Family (mean + SE plots)
+```{r}
+
+#show_col(hue_pal()(6)) code to find automatic colours for ggplot2
+
+# old boxplot
+ggplot(max_bf_overall,aes(x=HigherTaxonomy,y=log(max_bf),color=HigherTaxonomy))+
+  geom_boxplot(show.legend=F,fill="white", outlier.shape = NA)+
+  geom_jitter(show.legend=F,alpha=0.5, width = 0.2) +
+  xlab("Family") + ylab("log(BF) (N)") +
+  ggtitle("") +
+  ylim(-1, 6) +
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10)) 
+
+#relevel families
+max_bf_overall <- 
+ max_bf_overall %>%
+  mutate(Family = factor(Family, levels = c("Agamidae", "Chamaeleonidae", "Crotaphytidae", "Dactyloidae", "Iguanidae", "Leiosauridae", "Liolaemidae", "Phrynosomatidae", "Tropiduridae", "Lacertidae", "Teiidae", "Trogonophidae", "Cordylidae", "Scincidae", "Anguidae", "Varanidae", "Xenosauridae","Gekkonidae", "Phyllodactylidae", "Sphenodontidae")))
+
+# summarise family data meanBF and SE
+family.summary <- max_bf_overall %>%
+  group_by(Family) %>%
+  summarise(
+    MeanBF = mean(log(max_bf)),
+    SeBF = sd(log(max_bf))/sqrt(n()),
+    HigherTaxonomy = HigherTaxonomy # had to add a higher taxonomy column as wouldn't work without!
+    ) %>%
+  distinct()
+  
+
+
+# Plot 
+ggplot(max_bf_overall, aes(x = Family, y = log(max_bf), colour = HigherTaxonomy)) +
+geom_point(alpha = 0.5) +
+geom_point(data= family.summary, aes(y = MeanBF, size = 1), show.legend =  FALSE) +
+geom_errorbar(data = family.summary, aes(y = MeanBF, ymin = MeanBF - SeBF, ymax = MeanBF + SeBF)) +
+scale_colour_manual(values = c("red","goldenrod4","forestgreen","darkorange1","deepskyblue1", "deeppink1")) +
+theme_bw() +
+xlab("") +
+ylab("log(BF) (N)") +
+labs(colour=("Superfamily/Infraorder")) +
+coord_flip() +
+ylim(-1, 6)  +
+  theme(axis.text.x = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"),
+        axis.text.y = element_text(size = 15, angle = 0, hjust = 1, vjust = 0, face = "plain"),  
+        axis.title.x = element_text(size = 15, angle = 0, vjust = 0, face = "plain"),
+        axis.title.y = element_text(size = 15, angle = 0, hjust = .5, vjust = .5, face = "plain"),
+        legend.text = element_text(size = 15),
+        legend.title =  element_text(size = 15),
+        legend.position = "bottom")
+
+
+ggsave("biteforce-lepidosaurs/figures/bf-superfamily-mean-se.png", dpi = 300,width = 9, height = 10)
+```
+
+
+BF vs HigherTaxonomy (anova)
+```{r}
+bf_highertax <- pgls(log(max_bf) ~ HigherTaxonomy, data = lepidosaur,
+                  lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_highertax)
+  anova(bf_highertax)
+  summary(bf_highertax)
+```
+
+###  Bf vs diet (boxplot/jitter plot)
+```{r}
+# no longer using this plot
+max_bf_overall %>% 
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(x=MieriDiet,y=log(max_bf), colour=MieriDiet)) +
+  geom_boxplot(show.legend = F, fill = "white", alpha = 0.5, outlier.shape = NA) + 
+  geom_jitter(show.legend = F, width = 0.1, alpha= 0.5) +
+  ggtitle("") + 
+  theme_bw() +
+  ylab("log(BF) (N)") +
+  xlab("") +
+  ylim(-2.5,6)
+
+```
+
+###  Bf vs diet (mean and SE bars)
+```{r}
+
+# summarise the data by diet
+diet.summary <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  group_by(MieriDiet) %>%
+  summarise(
+    MeanBF = mean(log(max_bf)),
+    SeBF = sd(log(max_bf))/sqrt(n())
+  )
+  
+
+# Plot
+max_bf_overall %>%
+filter(!is.na(MieriDiet)) %>%
+ggplot(aes(x = MieriDiet, y = log(max_bf), colour = MieriDiet)) +
+  geom_point(alpha = 0.6) +
+  geom_point(data = diet.summary, aes(y = MeanBF, size = 2), show.legend =  FALSE) +
+  geom_errorbar(data = diet.summary, aes(y = MeanBF, ymin = MeanBF - SeBF, ymax = MeanBF + SeBF, width = 0.1)) +
+  theme_bw() +
+  xlab("") +
+  ylab("log(BF) (N)") +
+  labs(colour=("Diet")) +
+  theme(axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),  
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12),
+        legend.position = "none")
+
+
+ggsave("biteforce-lepidosaurs/figures/bf-diet-mean-se.png", dpi = 300, height = 6)
+
+```
+
+BF vs Diet (anova)
+```{r}
+bf_diet <- pgls(log(max_bf) ~ MieriDiet, data = lepidosaur,
+                  lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_diet)
+anova(bf_diet)
+summary(bf_diet)
+
+```
+
+### Bf vs all morph measurements (graph: scatterplot)
+```{r}
+
+plot_svl <- max_bf_overall %>% 
+  ggplot(aes(x=log(max_svl), y =log(max_bf))) + 
+  geom_point(alpha = 0.8, na.rm = TRUE) +
+  theme_bw() +
+  xlab("log(SVL) (mm)") +
+  ylab("log(BF)(N)") + 
+  geom_abline(slope = coefficients(bf_svl)[2], 
+ intercept = coefficients(bf_svl)[1]) +
+  ylim(-2.5, 7.5) +
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15),
+        legend.position = "none")
+
+plot_bm <-  max_bf_overall %>% 
+  ggplot(aes(x=log(max_bm), y =log(max_bf))) + 
+  geom_point(alpha = 0.8, na.rm = TRUE) +
+  theme_bw() +
+  xlab("log(BM) (g)") +
+  ylab("log(BF)(N)")+ 
+  geom_abline(slope = coefficients(bf_bm)[2], 
+  intercept = coefficients(bf_bm)[1]) +
+  ylim(-2.5, 7.5)+
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15),
+        legend.position = "none")
+
+    
+plot_hl <- max_bf_overall %>% 
+  ggplot(aes(x=log(max_hl), y =log(max_bf))) + 
+  geom_point(alpha = 0.8, na.rm = TRUE) +
+  theme_bw() +
+  xlab("log(HL) (mm)") +
+  ylab("log(BF)(N)")+ 
+  geom_abline(slope = coefficients(bf_hl)[2], 
+  intercept = coefficients(bf_hl)[1]) +
+  ylim(-2.5, 7.5)+
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15),
+        legend.position = "none")
+
+  
+plot_hh <- max_bf_overall %>% 
+  ggplot(aes(x=log(max_hh), y =log(max_bf))) + 
+  geom_point(alpha = 0.8, na.rm = TRUE) +
+  theme_bw() +
+  xlab("log(HH) (mm)") +
+  ylab("log(BF)(N)")+ 
+  geom_abline(slope = coefficients(bf_hh)[2], 
+  intercept = coefficients(bf_hh)[1]) +
+  ylim(-2.5, 7.5)+
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15),
+        legend.position = "none")
+
+
+plot_hw <-  max_bf_overall %>% 
+  ggplot(aes(x=log(max_hw), y =log(max_bf))) + 
+  geom_point(alpha = 0.8, na.rm = TRUE) +
+  theme_bw() +
+  xlab("log(HW) (mm)") +
+  ylab("log(BF)(N)")+ 
+  geom_abline(slope = coefficients(bf_hw)[2], 
+  intercept = coefficients(bf_hw)[1]) +
+  ylim(-2.5, 7.5)+
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15),
+        legend.position = "none")
+
+    
+plot_ljl <- max_bf_overall %>% 
+  ggplot(aes(x=log(max_ljl), y =log(max_bf))) + 
+  geom_point(alpha = 0.8, na.rm = TRUE)+
+  theme_bw() +
+  xlab("log(LJL) (mm)") +
+  ylab("log(BF)(N)")+ 
+  geom_abline(slope = coefficients(bf_ljl)[2], 
+  intercept = coefficients(bf_ljl)[1]) +
+  ylim(-2.5, 7.5)+
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15),
+        legend.position = "none")
+
+
+ggarrange( plot_svl , plot_bm, plot_hl, plot_hh, plot_hw, plot_ljl,  ncol = 3, nrow = 2)
+
+ggsave("biteforce-lepidosaurs/figures/bf-morph-scaterplot.png", dpi = 300, width = 8, height = 6)
+
+```
+
+### Bf vs all morph measurements (model: regression)
+```{r}
+
+bf_svl <- pgls(log(max_bf) ~ log(max_svl), data = lepidosaur,
+                   lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_svl)
+anova(bf_svl)
+summary(bf_svl)
+
+coefficients(bf_svl)[1]
+
+bf_bm <- pgls(log(max_bf) ~ log(max_bm), data = lepidosaur,
+                   lambda = "ML")
+par(mfrow=c(2,2))
+plot(bf_bm)
+anova(bf_bm)
+summary(bf_bm)
+
+bf_hl <- pgls(log(max_bf) ~ log(max_hl), data = lepidosaur,
+                   lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_hl)
+anova(bf_hl)
+summary(bf_hl)
+
+bf_hw <- pgls(log(max_bf) ~ log(max_hw), data = lepidosaur,
+                   lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_hw)
+anova(bf_hw)
+summary(bf_hw)
+
+bf_hh <- pgls(log(max_bf) ~ log(max_hh), data = lepidosaur,
+                   lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_hh)
+anova(bf_hh)
+summary(bf_hh)
+
+bf_ljl <- pgls(log(max_bf) ~ log(max_ljl), data = lepidosaur,
+                   lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_ljl)
+anova(bf_ljl)
+summary(bf_ljl)
+
+
+#PGLS also has an additional diagnostic that looks at phylogenetic residuals in a density plot.
+
+
+par(mar = c(4,4,2,0))
+par(mfrow = c(2,2))
+
+#The first two plots show the fit of the phylogenetic residuals from the model to a normal distribution: a density plot of the #residuals and a normal Q-Q plot. The second two plots scatterplots show pattern in the distribution of the fitted values against the #observed and residual values.
+```
+
+### Bf vs each morph measurement * diet  (ancova pgls)
+```{r}
+bf_svl_by_diet <- pgls(log(max_bf) ~ log(max_svl) * MieriDiet, data = lepidosaur, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_svl_by_diet)
+anova(bf_svl_by_diet)
+summary(bf_svl_by_diet)
+
+
+bf_bm_by_diet <- pgls(log(max_bf) ~ log(max_bm) * MieriDiet, data = lepidosaur, 
+                       lambda = "ML")
+
+bf_bm_by_diet_lm <- lm(log(max_bf) ~ log(max_bm)* MieriDiet, data = max_bf_overall)
+
+par(mfrow=c(2,2))
+plot(bf_bm_by_diet)
+anova(bf_bm_by_diet)
+summary(bf_bm_by_diet)
+
+
+autoplot(bf_bm_by_diet_lm, smooth.colour = NA)
+anova(bf_bm_by_diet_lm)
+summary(bf_bm_by_diet_lm)
+
+bf_hl_by_diet <- pgls(log(max_bf) ~ log(max_hl) * MieriDiet, data = lepidosaur, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_hl_by_diet)
+anova(bf_hl_by_diet)
+summary(bf_hl_by_diet)
+
+
+bf_hw_by_diet <- pgls(log(max_bf) ~ log(max_hw) * MieriDiet, data = lepidosaur, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_hw_by_diet)
+anova(bf_hw_by_diet)
+summary(bf_hw_by_diet)
+
+bf_hh_by_diet <- pgls(log(max_bf) ~ log(max_hh) * MieriDiet, data = lepidosaur, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_hh_by_diet)
+anova(bf_hh_by_diet)
+summary(bf_hh_by_diet)
+
+bf_ljl_by_diet <- pgls(log(max_bf) ~ log(max_ljl) * MieriDiet, data = lepidosaur, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_ljl_by_diet)
+anova(bf_ljl_by_diet)
+summary(bf_ljl_by_diet)
+```
+
+
+### Bf vs each morph measurement * diet  (ancova linear model)
+```{r}
+
+bf_svl_by_diet_lm <- lm(log(max_bf) ~ log(max_svl)* MieriDiet, data = max_bf_overall)
+
+autoplot(bf_svl_by_diet_lm)
+anova(bf_svl_by_diet_lm)
+summary(bf_svl_by_diet_lm)
+
+bf_bm_by_diet_lm <- lm(log(max_bf) ~ log(max_bm)* MieriDiet, data = max_bf_overall)
+
+autoplot(bf_bm_by_diet_lm, smooth.colour = NA)
+anova(bf_bm_by_diet_lm)
+summary(bf_bm_by_diet_lm)
+
+bf_hl_by_diet_lm <- lm(log(max_bf) ~ log(max_hl)* MieriDiet, data = max_bf_overall)
+  
+autoplot(bf_hl_by_diet_lm, smooth.colour = NA)
+anova(bf_hl_by_diet_lm)
+summary(bf_hl_by_diet_lm)
+
+
+bf_hw_by_diet_lm <- lm(log(max_bf) ~ log(max_hw)* MieriDiet, data = max_bf_overall)
+
+autoplot(bf_hw_by_diet_lm, smooth.colour = NA)
+anova(bf_hw_by_diet_lm)
+summary(bf_hw_by_diet_lm)
+
+bf_hh_by_diet_lm <- lm(log(max_bf) ~ log(max_hh)* MieriDiet, data = max_bf_overall)
+
+autoplot(bf_hh_by_diet_lm, smooth.colour = NA)
+anova(bf_hh_by_diet_lm)
+summary(bf_hh_by_diet_lm)
+
+bf_ljl_by_diet_lm <- lm(log(max_bf) ~ log(max_ljl)* MieriDiet, data = max_bf_overall)
+
+autoplot(bf_ljl_by_diet_lm, smooth.colour = NA)
+anova(bf_ljl_by_diet_lm)
+summary(bf_ljl_by_diet_lm)
+```
+
+### Bf vs each morph measurement * diet  (scatterplot with multiple lines)
+```{r}
+
+bf_svl_by_diet_plot <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(y =log(max_bf), x = log(max_svl), group=MieriDiet, colour=MieriDiet, na.rm = T)) +
+  geom_point() +
+  xlab("log(SVL) (mm)") +
+  ylab("log(BF)(N)")  +
+  geom_abline(intercept = coefficients(bf_svl_by_diet)[1], 
+  slope = coefficients(bf_svl_by_diet)[2], colour = "red") +
+  geom_abline(intercept = coefficients(bf_svl_by_diet)[1] + coefficients(bf_svl_by_diet)[3], 
+  slope = coefficients(bf_svl_by_diet)[2] + coefficients(bf_svl_by_diet)[5], colour = "green") +
+  geom_abline(intercept = coefficients(bf_svl_by_diet)[1] + coefficients(bf_svl_by_diet)[4], 
+  slope = coefficients(bf_svl_by_diet)[2] + coefficients(bf_svl_by_diet)[6], colour = "blue") +
+  labs(colour = "Diet")+
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15),
+        legend.text = element_text(size = 15),
+        legend.title = element_text(size = 15))
+
+bf_bm_by_diet_plot <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes( y =log(max_bf), x = log(max_bm), group=MieriDiet, colour=MieriDiet, na.rm = T)) +
+  geom_point()  +
+  xlab("log(BM) (g)") +
+  ylab("log(BF)(N)") +
+  geom_abline(intercept = coefficients(bf_bm_by_diet)[1], 
+  slope = coefficients(bf_bm_by_diet)[2], colour = "red") +
+  geom_abline(intercept = coefficients(bf_bm_by_diet)[1] + coefficients(bf_bm_by_diet)[3], 
+  slope = coefficients(bf_bm_by_diet)[2] + coefficients(bf_bm_by_diet)[5], colour = "green") +
+  geom_abline(intercept = coefficients(bf_bm_by_diet)[1] + coefficients(bf_bm_by_diet)[4], 
+  slope = coefficients(bf_bm_by_diet)[2] + coefficients(bf_bm_by_diet)[6], colour = "blue") +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15),
+        legend.position = "none")
+
+bf_hl_by_diet_plot <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(y = log(max_bf), x = log(max_hl), group=MieriDiet, colour=MieriDiet, na.rm = T)) +
+  geom_point()  +
+  xlab("log(HL) (mm)") +
+  ylab("log(BF)(N)") +
+  geom_abline(intercept = coefficients(bf_hl_by_diet)[1], 
+  slope = coefficients(bf_hl_by_diet)[2], colour = "red") +
+  geom_abline(intercept = coefficients(bf_hl_by_diet)[1] + coefficients(bf_hl_by_diet)[3], 
+  slope = coefficients(bf_hl_by_diet)[2] + coefficients(bf_hl_by_diet)[5], colour = "green") +
+  geom_abline(intercept = coefficients(bf_hl_by_diet)[1] + coefficients(bf_hl_by_diet)[4], 
+  slope = coefficients(bf_hl_by_diet)[2] + coefficients(bf_hl_by_diet)[6], colour = "blue") +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15),
+        legend.position = "none")
+
+bf_hw_by_diet_plot <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(y = log(max_bf), x = log(max_hw), group=MieriDiet, colour=MieriDiet, na.rm = T)) +
+  geom_point()  +
+  xlab("log(HW) (mm)") +
+  ylab("log(BF)(N)") +
+  geom_abline(intercept = coefficients(bf_hw_by_diet)[1], 
+  slope = coefficients(bf_hw_by_diet)[2], colour = "red") +
+  geom_abline(intercept = coefficients(bf_hw_by_diet)[1] + coefficients(bf_hw_by_diet)[3], 
+  slope = coefficients(bf_hw_by_diet)[2] + coefficients(bf_hw_by_diet)[5], colour = "green") +
+  geom_abline(intercept = coefficients(bf_hw_by_diet)[1] + coefficients(bf_hw_by_diet)[4], 
+  slope = coefficients(bf_hw_by_diet)[2] + coefficients(bf_hw_by_diet)[6], colour = "blue") +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15),
+        legend.position = "none")
+
+bf_hh_by_diet_plot <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(y=log(max_bf), x = log(max_hh), group=MieriDiet, colour=MieriDiet, na.rm = T)) +
+  geom_point()  +
+  xlab("log(HH) (mm)") +
+  ylab("log(BF)(N)") +
+  geom_abline(intercept = coefficients(bf_hh_by_diet)[1], 
+  slope = coefficients(bf_hh_by_diet)[2], colour = "red") +
+  geom_abline(intercept = coefficients(bf_hh_by_diet)[1] + coefficients(bf_hh_by_diet)[3], 
+  slope = coefficients(bf_hh_by_diet)[2] + coefficients(bf_hh_by_diet)[5], colour = "green") +
+  geom_abline(intercept = coefficients(bf_hh_by_diet)[1] + coefficients(bf_hh_by_diet)[4], 
+  slope = coefficients(bf_hh_by_diet)[2] + coefficients(bf_hh_by_diet)[6], colour = "blue") +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15),
+        legend.position = "none")
+
+bf_ljl_by_diet_plot <- max_bf_overall %>%
+  filter(!is.na(MieriDiet)) %>%
+  ggplot(aes(y=log(max_bf), x = log(max_ljl), group=MieriDiet, colour=MieriDiet, na.rm = T)) +
+  geom_point()  +
+  xlab("log(LJL) (mm)") +
+  ylab("log(BF)(N)") +
+  geom_abline(intercept = coefficients(bf_ljl_by_diet)[1], 
+  slope = coefficients(bf_ljl_by_diet)[2], colour = "red") +
+  geom_abline(intercept = coefficients(bf_ljl_by_diet)[1] + coefficients(bf_ljl_by_diet)[3], 
+  slope = coefficients(bf_ljl_by_diet)[2] + coefficients(bf_ljl_by_diet)[5], colour = "green") +
+  geom_abline(intercept = coefficients(bf_ljl_by_diet)[1] + coefficients(bf_ljl_by_diet)[4], 
+  slope = coefficients(bf_ljl_by_diet)[2] + coefficients(bf_ljl_by_diet)[6], colour = "blue") +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        axis.title.x = element_text(size = 15),
+        axis.title.y = element_text(size = 15))
+
+ggarrange( bf_svl_by_diet_plot , bf_bm_by_diet_plot, bf_hl_by_diet_plot, bf_hw_by_diet_plot, bf_hh_by_diet_plot, bf_ljl_by_diet_plot,  ncol = 3, nrow = 2,  common.legend = TRUE, legend ="bottom")  
+
+ggsave("biteforce-lepidosaurs/figures/bf-diet-scaterplot.png", dpi = 300, width = 10)
+```
+
+### Bf vs each morph measurement * superfamily  (ancova pgls)
+```{r}
+
+#na_count <- max_bf_overall %>%  group_by(HigherTaxonomy) %>% summarise_all(~ sum(is.na(.)))
+#t <- max_bf_overall %>% group_by(HigherTaxonomy) %>% count()
+
+# Note here we have specified the comparative data = lepidosaur_no_SP_Gekko - which is the comparative data without sphenodon or gekkota
+bf_svl_by_superfamily <- pgls(log(max_bf) ~ log(max_svl) * HigherTaxonomy, data = lepidosaur_no_SP_Gekko, 
+                       lambda = "ML")
+
+
+par(mfrow=c(2,2))
+plot(bf_svl_by_superfamily)
+anova(bf_svl_by_superfamily)
+summary(bf_svl_by_superfamily)
+
+bf_svl_by_superfamily$model$coef[]
+bf_svl_by_superfamily[]
+
+# Note here we have specified the comparative data = lepidosaur_no_SP_Gekko_Anugi - which is the comparative data without sphenodon, gekkota or anguimorpha
+bf_bm_by_superfamily <- pgls(log(max_bf) ~ log(max_bm) * HigherTaxonomy, data = lepidosaur_no_SP_Gekko_Angui, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_bm_by_superfamily)
+anova(bf_bm_by_superfamily)
+summary(bf_bm_by_superfamily)
+
+
+bf_hl_by_superfamily <- pgls(log(max_bf) ~ log(max_hl) * HigherTaxonomy, data = lepidosaur_no_SP_Gekko, 
+                       lambda = "ML")
+
+
+par(mfrow=c(2,2))
+plot(bf_hl_by_superfamily)
+anova(bf_hl_by_superfamily)
+summary(bf_hl_by_superfamily)
+
+
+bf_hw_by_superfamily <- pgls(log(max_bf) ~ log(max_hw) * HigherTaxonomy, data = lepidosaur_no_SP_Gekko, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_hw_by_superfamily)
+anova(bf_hw_by_superfamily)
+summary(bf_hw_by_superfamily)
+
+bf_hh_by_superfamily <- pgls(log(max_bf) ~ log(max_hh) * HigherTaxonomy, data = lepidosaur_no_SP_Gekko, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_hh_by_superfamily)
+anova(bf_hh_by_superfamily)
+summary(bf_hh_by_superfamily)
+
+bf_ljl_by_superfamily <- pgls(log(max_bf) ~ log(max_ljl) * HigherTaxonomy, data = lepidosaur_no_SP_Gekko, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_ljl_by_superfamily)
+anova(bf_ljl_by_superfamily)
+summary(bf_ljl_by_superfamily)
+
+```
+
+### Bf vs each morph measurement * superfamily  (scatterplot with multiple lines)
+```{r}
+
+
+scale_colour_manual(values = c("red","goldenrod4","forestgreen","darkorange1","deepskyblue1", "deeppink1"))
+
+bf_svl_by_superfamily_plot <- max_bf_overall %>%
+  filter(HigherTaxonomy != "Sphenodontia" & HigherTaxonomy != "Gekkota") %>%
+  ggplot(aes(y =log(max_bf), x = log(max_svl), group=HigherTaxonomy, colour=HigherTaxonomy, na.rm = T)) +
+  geom_point() +
+  scale_color_manual(values=c("red","forestgreen","darkorange1","deepskyblue1")) +
+  xlab("log(SVL) (mm)") +
+  ylab("log(BF)(N)")  +
+  geom_abline(intercept = coefficients(bf_svl_by_superfamily)[1], 
+  slope = coefficients(bf_svl_by_superfamily)[2], colour = "red") +
+  geom_abline(intercept = coefficients(bf_svl_by_superfamily)[1] - coefficients(bf_svl_by_superfamily)[3], 
+  slope = coefficients(bf_svl_by_superfamily)[2] + coefficients(bf_svl_by_superfamily)[6], colour = "forestgreen") +
+  geom_abline(intercept = coefficients(bf_svl_by_superfamily)[1] - coefficients(bf_svl_by_superfamily)[4], 
+  slope = coefficients(bf_svl_by_superfamily)[2] - coefficients(bf_svl_by_superfamily)[7], colour = "darkorange1") +
+  geom_abline(intercept = coefficients(bf_svl_by_superfamily)[1] + coefficients(bf_svl_by_superfamily)[5], 
+  slope = coefficients(bf_svl_by_superfamily)[2] + coefficients(bf_svl_by_superfamily)[8], colour = "deepskyblue1") +
+  labs(colour = "Superfamily/Infraorder")+
+  theme_bw()+
+  theme(axis.text.x = element_text(size = 13),
+        axis.text.y = element_text(size = 13),
+        axis.title.x = element_text(size = 13),
+        axis.title.y = element_text(size = 13),
+        legend.title = element_text(size = 13),
+        legend.text = element_text(size = 13))
+
+bf_bm_by_superfamily_plot <- max_bf_overall %>%
+  filter(HigherTaxonomy != "Sphenodontia" & HigherTaxonomy != "Anguimorpha" & HigherTaxonomy != "Gekkota") %>%
+  ggplot(aes( y =log(max_bf), x = log(max_bm), group=HigherTaxonomy, colour=HigherTaxonomy, na.rm = T)) +
+  geom_point()  +
+  scale_color_manual(values=c("forestgreen","darkorange1","deepskyblue1")) +
+  xlab("log(BM) (g)") +
+  ylab("log(BF)(N)") +
+  geom_abline(intercept = coefficients(bf_bm_by_superfamily)[1], 
+  slope = coefficients(bf_bm_by_superfamily)[2], colour = "forestgreen") +
+  geom_abline(intercept = coefficients(bf_bm_by_superfamily)[1] + coefficients(bf_bm_by_superfamily)[3], 
+  slope = coefficients(bf_bm_by_superfamily)[2] + coefficients(bf_bm_by_superfamily)[5], colour = "darkorange1") +
+  geom_abline(intercept = coefficients(bf_bm_by_superfamily)[1] + coefficients(bf_bm_by_superfamily)[4], 
+  slope = coefficients(bf_bm_by_superfamily)[2] + coefficients(bf_bm_by_superfamily)[6], colour = "deepskyblue1") +
+  theme_bw()+
+  theme(axis.text.x = element_text(size = 13),
+        axis.text.y = element_text(size = 13),
+        axis.title.x = element_text(size = 13),
+        axis.title.y = element_text(size = 13),
+        legend.title = element_text(size = 13),
+        legend.text = element_text(size = 13))
+
+bf_hl_by_superfamily_plot <- max_bf_overall %>%
+  filter(HigherTaxonomy != "Sphenodontia" & HigherTaxonomy != "Gekkota") %>%
+  ggplot(aes(y = log(max_bf), x = log(max_hl), group=HigherTaxonomy, colour=HigherTaxonomy)) +
+  scale_color_manual(values=c("red","forestgreen","darkorange1","deepskyblue1")) +
+  geom_point()  +
+  xlab("log(HL) (mm)") +
+  ylab("log(BF)(N)") +
+ geom_abline(intercept = coefficients(bf_hl_by_superfamily)[1], 
+  slope = coefficients(bf_hl_by_superfamily)[2], colour = "red") +
+  geom_abline(intercept = coefficients(bf_hl_by_superfamily)[1] + coefficients(bf_hl_by_superfamily)[3], 
+  slope = coefficients(bf_hl_by_superfamily)[2] + coefficients(bf_hl_by_superfamily)[6], colour = "forestgreen") +
+  geom_abline(intercept = coefficients(bf_hl_by_superfamily)[1] + coefficients(bf_hl_by_superfamily)[4], 
+  slope = coefficients(bf_hl_by_superfamily)[2] + coefficients(bf_hl_by_superfamily)[7], colour = "darkorange1") +
+  geom_abline(intercept = coefficients(bf_hl_by_superfamily)[1] + coefficients(bf_hl_by_superfamily)[5], 
+  slope = coefficients(bf_hl_by_superfamily)[2] + coefficients(bf_hl_by_superfamily)[8], colour = "deepskyblue1") +
+  theme_bw()+
+  theme(axis.text.x = element_text(size = 13),
+        axis.text.y = element_text(size = 13),
+        axis.title.x = element_text(size = 13),
+        axis.title.y = element_text(size = 13),
+        legend.title = element_text(size = 13),
+        legend.text = element_text(size = 13))
+
+bf_hw_by_superfamily_plot <- max_bf_overall %>%
+  filter(HigherTaxonomy != "Sphenodontia" & HigherTaxonomy != "Gekkota") %>%
+  ggplot(aes(y = log(max_bf), x = log(max_hw), group=HigherTaxonomy, colour=HigherTaxonomy, na.rm = T)) +
+  scale_color_manual(values=c("red","forestgreen","darkorange1","deepskyblue1")) +
+  geom_point()  +
+  xlab("log(HW) (mm)") +
+  ylab("log(BF)(N)") +
+  geom_abline(intercept = coefficients(bf_hw_by_superfamily)[1], 
+  slope = coefficients(bf_hw_by_superfamily)[2], colour = "red") +
+  geom_abline(intercept = coefficients(bf_hw_by_superfamily)[1] + coefficients(bf_hw_by_superfamily)[3], 
+  slope = coefficients(bf_hw_by_superfamily)[2] + coefficients(bf_hw_by_superfamily)[6], colour = "forestgreen") +
+  geom_abline(intercept = coefficients(bf_hw_by_superfamily)[1] + coefficients(bf_hw_by_superfamily)[4], 
+  slope = coefficients(bf_hw_by_superfamily)[2] + coefficients(bf_hw_by_superfamily)[7], colour = "darkorange1") +
+  geom_abline(intercept = coefficients(bf_hw_by_superfamily)[1] + coefficients(bf_hw_by_superfamily)[5], 
+  slope = coefficients(bf_hw_by_superfamily)[2] + coefficients(bf_hw_by_superfamily)[8], colour = "deepskyblue1") +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 13),
+        axis.text.y = element_text(size = 13),
+        axis.title.x = element_text(size = 13),
+        axis.title.y = element_text(size = 13),
+        legend.title = element_text(size = 13),
+        legend.text = element_text(size = 13))
+
+bf_hh_by_superfamily_plot <- max_bf_overall %>%
+  filter(HigherTaxonomy != "Sphenodontia" & HigherTaxonomy != "Gekkota") %>%
+  ggplot(aes(y=log(max_bf), x = log(max_hh), group=HigherTaxonomy, colour=HigherTaxonomy, na.rm = T)) +
+  scale_color_manual(values=c("red","forestgreen","darkorange1","deepskyblue1")) +
+  geom_point()  +
+  xlab("log(HH) (mm)") +
+  ylab("log(BF)(N)") +
+  geom_abline(intercept = coefficients(bf_hh_by_superfamily)[1], 
+  slope = coefficients(bf_hh_by_superfamily)[2], colour = "red") +
+  geom_abline(intercept = coefficients(bf_hh_by_superfamily)[1] + coefficients(bf_hh_by_superfamily)[3], 
+  slope = coefficients(bf_hh_by_superfamily)[2] + coefficients(bf_hh_by_superfamily)[6], colour = "forestgreen") +
+  geom_abline(intercept = coefficients(bf_hh_by_superfamily)[1] + coefficients(bf_hh_by_superfamily)[4], 
+  slope = coefficients(bf_hh_by_superfamily)[2] + coefficients(bf_hh_by_superfamily)[7], colour = "darkorange1") +
+  geom_abline(intercept = coefficients(bf_hh_by_superfamily)[1] + coefficients(bf_hh_by_superfamily)[5], 
+  slope = coefficients(bf_hh_by_superfamily)[2] + coefficients(bf_hh_by_superfamily)[8], colour = "deepskyblue1") +
+  theme_bw() 
+
+bf_ljl_by_superfamily_plot <- max_bf_overall %>%
+  filter(HigherTaxonomy != "Sphenodontia" & HigherTaxonomy != "Gekkota") %>%
+  ggplot(aes(y=log(max_bf), x = log(max_ljl), group=HigherTaxonomy, colour=HigherTaxonomy, na.rm = T)) +
+  scale_color_manual(values=c("red","forestgreen","darkorange1","deepskyblue1")) +
+  geom_point()  +
+  xlab("log(LJL) (mm)") +
+  ylab("log(BF)(N)") +
+  geom_abline(intercept = coefficients(bf_ljl_by_superfamily)[1], 
+  slope = coefficients(bf_ljl_by_superfamily)[2], colour = "red") +
+  geom_abline(intercept = coefficients(bf_ljl_by_superfamily)[1] + coefficients(bf_ljl_by_superfamily)[3], 
+  slope = coefficients(bf_ljl_by_superfamily)[2] + coefficients(bf_ljl_by_superfamily)[6], colour = "forestgreen") +
+  geom_abline(intercept = coefficients(bf_ljl_by_superfamily)[1] + coefficients(bf_ljl_by_superfamily)[4], 
+  slope = coefficients(bf_ljl_by_superfamily)[2] + coefficients(bf_ljl_by_superfamily)[7], colour = "darkorange1") +
+  geom_abline(intercept = coefficients(bf_ljl_by_superfamily)[1] + coefficients(bf_ljl_by_superfamily)[5], 
+  slope = coefficients(bf_ljl_by_superfamily)[2] + coefficients(bf_ljl_by_superfamily)[8], colour = "deepskyblue1") +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 13),
+        axis.text.y = element_text(size = 13),
+        axis.title.x = element_text(size = 13),
+        axis.title.y = element_text(size = 13),
+        legend.title = element_text(size = 13),
+        legend.text = element_text(size = 13))
+
+ggarrange( bf_svl_by_superfamily_plot ,bf_bm_by_superfamily_plot, bf_hl_by_superfamily_plot, bf_hw_by_superfamily_plot, bf_hh_by_superfamily_plot, bf_ljl_by_superfamily_plot,  ncol = 3, nrow = 2,  common.legend = TRUE, legend ="bottom")
+
+ggsave("biteforce-lepidosaurs/figures/bf-superfamily-scatterplot.png", dpi = 300, height = 6, width = 8)
+```
+
+  
+### bf ~ svl * diet * superfamily
+```{r}
+#I think the three covariate model might be overkill but good to quickly check it doesn’t do anything different
+#Ie that diet doesn’t suddenly become important if you control for superfamily
+
+
+# Note here we have specified the comparative data = lepidosaur_no_SP_Gekko_Angui - which is the comparative data without sphenodon/gekkota/anguimorpha
+
+bf_svl_by_diet_superfamily <- pgls(log(max_bf) ~ log(max_svl) * MieriDiet * HigherTaxonomy, data = lepidosaur_no_SP_Gekko_Angui, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_svl_by_diet_superfamily)
+anova(bf_svl_by_diet_superfamily)
+summary(bf_svl_by_diet_superfamily)
+
+bf_svl_by_diet_superfamily$model$coef[]
+bf_svl_by_diet_superfamily[]
+
+
+bf_bm_by_diet_superfamily <- pgls(log(max_bf) ~ log(max_bm) * MieriDiet * HigherTaxonomy, data = lepidosaur_no_SP_Gekko_Angui, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_bm_by_diet_superfamily)
+anova(bf_bm_by_diet_superfamily)
+summary(bf_bm_by_diet_superfamily)
+
+
+bf_hl_by_diet_superfamily <- pgls(log(max_bf) ~ log(max_hl) * MieriDiet * HigherTaxonomy, data = lepidosaur_no_SP_Gekko_Angui, 
+                       lambda = "ML")
+
+
+par(mfrow=c(2,2))
+plot(bf_hl_by_diet_superfamily)
+anova(bf_hl_by_diet_superfamily)
+summary(bf_hl_by_diet_superfamily)
+
+
+bf_hw_by_diet_superfamily <- pgls(log(max_bf) ~ log(max_hw) * MieriDiet * HigherTaxonomy, data = lepidosaur_no_SP_Gekko_Angui, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_hw_by_diet_superfamily)
+anova(bf_hw_by_diet_superfamily)
+summary(bf_hw_by_diet_superfamily)
+
+bf_hh_by_diet_superfamily <- pgls(log(max_bf) ~ log(max_hh) * MieriDiet * HigherTaxonomy, data = lepidosaur_no_SP_Gekko_Angui, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_hh_by_diet_superfamily)
+anova(bf_hh_by_diet_superfamily)
+summary(bf_hh_by_diet_superfamily)
+
+bf_ljl_by_diet_superfamily <- pgls(log(max_bf) ~ log(max_ljl) * MieriDiet * HigherTaxonomy, data = lepidosaur_no_SP_Gekko_Angui, 
+                       lambda = "ML")
+
+par(mfrow=c(2,2))
+plot(bf_ljl_by_diet_superfamily)
+anova(bf_ljl_by_diet_superfamily)
+summary(bf_ljl_by_diet_superfamily)
+
+max_bf_overall %>%
+  group_by(Lifestyle) %>%
+  tally()
+
+```
+
+### bf ~ lifestyle
+```{r}
+lifestyle.summary <- max_bf_overall %>%
+  filter(!is.na(Lifestyle)) %>%
+  group_by(Lifestyle) %>%
+  summarise(
+    MeanBF = mean(log(max_bf)),
+    SeBF = sd(log(max_bf))/sqrt(n())
+  )
+  
+# Plot
+max_bf_overall %>%
+filter(!is.na(Lifestyle)) %>%
+ggplot(aes(x = Lifestyle, y = log(max_bf), colour = Lifestyle)) +
+  geom_point(alpha = 0.6) +
+  geom_point(data = lifestyle.summary, aes(y = MeanBF, size = 2), show.legend =  FALSE) +
+  geom_errorbar(data = lifestyle.summary, aes(y = MeanBF, ymin = MeanBF - SeBF, ymax = MeanBF + SeBF, width = 0.3)) +
+  theme_bw() +
+  xlab("") +
+  ylab("log(BF) (N)") +
+  labs(colour=("Diet")) +
+  theme(axis.text.x = element_text(size = 12, angle = 0, hjust = .5, vjust = .5, face = "plain"),
+        axis.text.y = element_text(size = 12, angle = 0, hjust = 1, vjust = 0, face = "plain"),  
+        axis.title.x = element_text(size = 12, angle = 0, vjust = 0, face = "plain"),
+        axis.title.y = element_text(size = 12, angle = 0, hjust = .5, vjust = .5, face = "plain"),
+        legend.position = "none") +
+  coord_flip()
+
+
+max_bf_overall %>% 
+  ggplot(aes(x=log(max_svl), y =log(max_bf), colour = Family)) + 
+  geom_point(alpha = 0.8, na.rm = TRUE) +
+  theme_bw() +
+  xlab("log(SVL) (mm)") +
+  ylab("log(BF)(N)") + 
+  theme(axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12))
+
+
+#ggsave("biteforce-lepidosaurs/figures/bf-diet-mean-se.png", dpi = 300, height = 5)
+```
+
+
+### notes
+```{r}
+
+
+# summarise family data meanBF and SE
+family.summary <- max_bf_overall %>%
+  group_by(Family) %>%
+  summarise(
+    MeanBF = mean(max_bf),
+    SeBF = sd(max_bf)/sqrt(n()),
+    HigherTaxonomy = HigherTaxonomy, # had to add a higher taxonomy column as wouldn't work without!
+    ) %>%
+  distinct()
+
+
+t <- raw_data %>%
+  arrange() %>% 
+  distinct(Citation, .keep_all = TRUE) %>%
+  group_by(SC) %>%
+  tally()
+
+max_bf_overall %>%
+  select(everything()) %>%  # replace to your needs
+  summarise_all(funs(sum(is.na(.))))
+
+t <- max_bf_overall %>%
+  filter(MieriDiet == "Herbivorous") %>%
+  select(BinomialReptileDatabase, Family)
+  group_by(Family) %>%
+  tally()
+
+t <- max_bf_overall %>%
+  group_by(Family) %>%
+  tally()
+  
+  
+```
+
