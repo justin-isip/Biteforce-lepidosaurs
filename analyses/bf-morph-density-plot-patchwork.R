@@ -105,5 +105,5 @@ ljl_distribution <-  ggplot(max_bf_overall, aes(x=log(max_ljl))) +
 bf_distribution + svl_distribution + bm_distribution+ hl_distribution + hw_distribution + hh_distribution + ljl_distribution + plot_layout(ncol = 2, nrow = 4, byrow = T)
 
 # Save the plot
-ggsave("figures/bf-morph-density.png", dpi = 300, height = 10, width = 8)
+# ggsave("figures/bf-morph-density.png", dpi = 300, height = 10, width = 8)
 
