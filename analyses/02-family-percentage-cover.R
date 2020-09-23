@@ -65,8 +65,6 @@ family_coverage <-
 
 
 # Lets create something pretty-ish!
-
-
 ggplot(family_coverage, aes(fill=PercentCoverage, y = OurSpNumber, x=reorder(Family, OurSpNumber))) + 
   geom_bar(position = position_stack(reverse = TRUE), stat="identity") +
   theme(text = element_text(size=8)) +
@@ -78,36 +76,6 @@ ggplot(family_coverage, aes(fill=PercentCoverage, y = OurSpNumber, x=reorder(Fam
   labs(y = "Number of species in our study", x = "Family")
 
 
-#  New code
 
-sp_number <- 
-  max_bf_overall %>% 
-  count(Family)
-
-superfamily <- max_bf_overall %>% select(Family, HigherTaxonomy) %>% distinct()
-
-superfamily <- full_join(sp_number, superfamily, by = "Family")
-
-
-ggplot(superfamily, aes( y = n, x=Family, fill = HigherTaxonomy, colour = HigherTaxonomy)) + 
-  geom_bar(position = position_stack(reverse = TRUE), stat="identity") +
-  scale_fill_manual(values = c("red","goldenrod4","forestgreen","darkorange1","deepskyblue1", "deeppink1")) +
-  scale_colour_manual(values = c("red","goldenrod4","forestgreen","darkorange1","deepskyblue1", "deeppink1")) +
-  coord_flip() +
-  theme_bw() +
-  scale_y_continuous(breaks=seq(0,45,5)) +
-  xlab("Family") +
-  ylab("Number of species in my dataset") +
-  labs(fill = "Superfamily/Infraorder") +
-  labs(colour = "Superfamily/Infraorder") +
-theme(axis.text.x = element_text(size = 15),
-      axis.text.y = element_text(size = 15),
-      axis.title.x = element_text(size = 15),
-      axis.title.y = element_text(size = 15),
-      legend.text = element_text(size = 15),
-      legend.title = element_text(size = 15),
-      legend.position = "right")
-
-ggsave("figures/family-percentage-cover.png", dpi = 300, height = 6, width = 10)
 
 
