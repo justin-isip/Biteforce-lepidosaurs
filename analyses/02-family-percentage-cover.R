@@ -89,18 +89,25 @@ superfamily <- max_bf_overall %>% select(Family, HigherTaxonomy) %>% distinct()
 superfamily <- full_join(sp_number, superfamily, by = "Family")
 
 
-ggplot(superfamily, aes(colour = HigherTaxonomy, fill = HigherTaxonomy, y = n, x=Family)) + 
+ggplot(superfamily, aes( y = n, x=Family, fill = HigherTaxonomy, colour = HigherTaxonomy)) + 
   geom_bar(position = position_stack(reverse = TRUE), stat="identity") +
+  scale_fill_manual(values = c("red","goldenrod4","forestgreen","darkorange1","deepskyblue1", "deeppink1")) +
+  scale_colour_manual(values = c("red","goldenrod4","forestgreen","darkorange1","deepskyblue1", "deeppink1")) +
   coord_flip() +
   theme_bw() +
   scale_y_continuous(breaks=seq(0,45,5)) +
-  labs(y = "Number of species in my dataset", x = "Family", colour = "Superfamily/Infraorder", fill = "Superfamily/Infraorder") +
+  xlab("Family") +
+  ylab("Number of species in my dataset") +
+  labs(fill = "Superfamily/Infraorder") +
+  labs(colour = "Superfamily/Infraorder") +
 theme(axis.text.x = element_text(size = 15),
       axis.text.y = element_text(size = 15),
       axis.title.x = element_text(size = 15),
       axis.title.y = element_text(size = 15),
       legend.text = element_text(size = 15),
-      legend.title = element_text(size = 15))
+      legend.title = element_text(size = 15),
+      legend.position = "right")
 
 ggsave("figures/family-percentage-cover.png", dpi = 300, height = 6, width = 10)
-  
+
+
