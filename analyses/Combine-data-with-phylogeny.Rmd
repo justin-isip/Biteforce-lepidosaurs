@@ -1,0 +1,167 @@
+---
+title: "combine-data-with-phylogeny"
+author: "Justin Ephraim Isip"
+date: "23/09/2020"
+output: html_document
+---
+
+
+This script combines my data and phylogeny to conduct PGLS analysis
+
+## Load libraries
+```{r, message = FALSE, warning = FALSE}
+library(ape)
+library(geiger)
+library(picante)
+library(caper)
+library(tidyverse)
+library(rlist)
+library(phytools)
+library(ggpubr)
+library(ggfortify)
+library(patchwork)
+library(scales)
+```
+
+## Read in my data and phylogeny
+```{r, message = FALSE, warning = FALSE}
+max_bf_overall <- read.csv("../data/max_bf_overall.csv", stringsAsFactors = T)
+lepidosaurtree <- read.tree("../WrightTree.nex")
+```
+
+
+## Let's have a quick look at the tree
+```{r, message = FALSE, warning = FALSE}
+lepidosaurtree
+str(lepidosaurtree)
+```
+
+## My tree has 4162 species and 4161 internal nodes. 
+## Lets check whether my tree is dichomotomous?
+```{r}
+is.binary.tree(lepidosaurtree)
+```
+
+## First, lets replace spaces with underscores (_) so they match up with species names in the tree
+```{r}
+max_bf_overall$BinomialReptileDatabase <- gsub(" ", "_", max_bf_overall$BinomialReptileDatabase)
+```
+
+## Now, lets check mismatches between species in my data and phylogeny
+```{r}
+check <- name.check(phy = lepidosaurtree, data = max_bf_overall, data.names = max_bf_overall$BinomialReptileDatabase)
+```
+
+## Here I relace more recent species names that are in my dataset to match older species names that are in my phylogeny
+```{r}
+
+lepidosaurtree$tip.label <- gsub("Typhlosaurus_lineatus", "Acontias_kgalagadi", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Glaphyromorphus_isolepis", "Eremiascincus_isolepis", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Cordylus_cataphractus", "Ouroborus_cataphractus", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Cordylus_warreni", "Smaug_mossambicus", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Uromastyx_acanthinura", "Uromastix_acanthinura", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Microacontias_litoralis", "Acontias_litoralis", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Cryptoblepharus_boutonii", "Cryptoblepharus_metallicus", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Gallotia_gomerana", "Gallotia_bravoana", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Liolaemus_zullyi", "Liolaemus_zullyae", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Podarcis_atrata", "Podarcis_liolepis", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Laudakia_stellio", "Stellagama_stellio", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Bradypodion_caffrum", "Bradypodion_caffer", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Cordylus_polyzonus", "Karusasaurus_polyzonus", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Lygosoma_afrum", "Mochlus_sundevallii", lepidosaurtree$tip.label)
+lepidosaurtree$tip.label <- gsub("Tupinambis_merianae", "Salvator_merianae", lepidosaurtree$tip.label)
+
+# check$tree_not_data[check$tree_not_data == "Tapinurus_scutipunctatus"]
+# ^ this code checks to see if a particular species name is in the phylogeny
+```
+
+## For species that are missing from our phylogeny, I have added them into our tree based on other phylogenies in the literature
+## Using the bind.tip function, I've specied the name of the new species, the tip I want to add it to, and an arbitrary branch length
+```{r}
+
+lepidosaurtree <- bind.tip(lepidosaurtree, tip.label = "Bradypodion_kentanicum",
+                           where = 2446, position = 0.1)
+lepidosaurtree <- bind.tip(lepidosaurtree, tip.label = "Liolaemus_mapuche",
+                           where = 2768, position = 0.1)
+lepidosaurtree <- bind.tip(lepidosaurtree, tip.label = "Bradypodion_caeruleogula",
+                           where = 6618, position = 0.5)
+lepidosaurtree <- bind.tip(lepidosaurtree, tip.label = "Xenosaurus_newmanorum",
+                           where = 3341, position = 0.1)
+lepidosaurtree <- bind.tip(lepidosaurtree, tip.label = "Anolis_pentaprion",
+                           where = 2970, position = 0.1)
+
+# This code extracts the tip number for a species - which(lepidosaurtree$tip.label == "Aspidoscelis_flagellicauda")
+# This code searches thre tree based on a sequence of nodes/tips - zoom(lepidosaurtree, 2970:2971 , subtree = TRUE)
+# This code gets the parent node to a specific node - getParent(lepidosaurtree, node = 2768)
+# This code searches the tree based on a character string such as a genus - zoom(lepidosaurtree, grep("Bradypodion", lepidosaurtree$tip.label))
+
+```
+
+## Now that we've added missing species and corrected species names, lets recheck mismatches between species in my data and phylogeny 
+```{r}
+check <- name.check(phy = lepidosaurtree, data = max_bf_overall, data.names = max_bf_overall$BinomialReptileDatabase)
+```
+
+## Drop species missing from the tree which aren't in our data using drop.tip
+```{r}
+lepidosaurtree <- drop.tip(lepidosaurtree, check$tree_not_data)
+```
+
+## Remove species from the data which are not in the tree
+```{r}
+matches <- match(max_bf_overall$BinomialReptileDatabase, check$data_not_tree, nomatch = 0)
+max_bf_overall <- subset(max_bf_overall, matches == 0)
+```
+
+## Now, final recheck of the mismatches between species in my data and phylogeny - this should be "ok" if there are no mismatches! i.e. data and phylogeny contain the same species!
+```{r}
+check <- name.check(phy = lepidosaurtree, data = max_bf_overall, data.names = max_bf_overall$BinomialReptileDatabase)
+```
+
+# Last but not least, lets combine the phylogeny with our data!
+# I've created 3 objects that combine the data with the phylogeny
+```{r}
+# This object contains all of the data
+lepidosaur <- comparative.data(phy = lepidosaurtree, data = max_bf_overall, 
+                               names.col =BinomialReptileDatabase, vcv = TRUE,
+                                warn.dropped = TRUE, na.omit = FALSE)
+
+
+# There is limited data for Sphenedontia (n = 1) and Gekkota (n = 2) for the superfamily analysis
+# Subset the data to exclude Sphenodontia and Gekkota
+
+max_bf_no_sphenodontia_gekkota <- max_bf_overall %>%
+  filter(HigherTaxonomy != "Sphenodontia")%>%
+  filter(HigherTaxonomy != "Gekkota") %>%
+  droplevels()
+
+# Create another object without Sphenodontia and Gekkota
+
+lepidosaur_no_sphenodontia_gekkota <- comparative.data( phy = lepidosaurtree, data = max_bf_no_sphenodontia_gekkota, 
+                               names.col =BinomialReptileDatabase, vcv = TRUE,
+                                warn.dropped = TRUE, na.omit = FALSE)
+
+# Check which species have been dropped
+lepidosaur_no_sphenodontia_gekkota$dropped$tips
+lepidosaur_no_sphenodontia_gekkota$dropped$unmatched.rows
+
+# I need to remove Anguimorpha as there is limited body mass data for this superfamily
+# Subset the data again to exclude Sphenodontia, Gekkota and Anguimorpha
+
+max_bf_no_sphenodontia_gekkota_anguimorpha <- max_bf_overall %>%
+  filter(HigherTaxonomy != "Sphenodontia")%>%
+  filter(HigherTaxonomy != "Gekkota") %>%
+  filter(HigherTaxonomy != "Anguimorpha") %>%
+  droplevels()
+
+# Create another comparative data without Sphenodon and Gekkota
+lepidosaur_no_sphenodontia_gekkota_anguimorpha <- comparative.data(phy = lepidosaurtree, data = max_bf_no_sphenodontia_gekkota_anguimorpha, 
+                               names.col =BinomialReptileDatabase, vcv = TRUE,
+                                warn.dropped = TRUE, na.omit = FALSE)
+
+# Double check to make sure the correct species have been dropped
+lepidosaur_no_sphenodontia_gekkota_anguimorpha$dropped$tips
+lepidosaur_no_sphenodontia_gekkota_anguimorpha$dropped$unmatched.rows
+
+
+```
